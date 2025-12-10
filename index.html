@@ -949,7 +949,6 @@
             <div class="module-section" id="moduleSection" style="display: none;">
                 <h2>Modul Aplikasi</h2>
                 <div class="module-grid" id="mainModuleGrid">
-                    <button class="overlay-btn module-btn" data-action="tempelData"><i class="fas fa-paste"></i>Tempel Data</button>
                     <button class="overlay-btn module-btn" data-action="kirimWa"><i class="fab fa-whatsapp"></i>Kirim WA</button>
                     <button class="overlay-btn module-btn" data-action="telepon"><i class="fas fa-phone"></i>Telepon</button>
                     <button class="overlay-btn module-btn" data-action="cariLokasi"><i class="fas fa-map-marker-alt"></i>Cari Lokasi</button>
@@ -1280,6 +1279,7 @@
                         <div style="display: flex; gap: 10px;">
                             <input id="notaCustomerName" type="text" placeholder="Nama pelanggan..." style="width: 100%;">
                             <button class="btn btn-info btn-sm" id="pickCustomerBtn"><i class="fas fa-users"></i></button>
+							<button class="btn btn-secondary btn-sm" id="manualInputNotaBtn"><i class="fas fa-keyboard"></i></button>
                         </div>
                     </div>
                     <div class="form-group">
@@ -1318,6 +1318,33 @@
             </div>
         </div>
 
+        <!-- Manual Input Overlay -->
+        <div class="overlay" id="manualInputOverlay">
+            <div class="overlay-content">
+                <div class="overlay-header">
+                    <h2>Input Data Manual</h2>
+                    <button class="close-overlay-btn">&times;</button>
+                </div>
+                <div class="overlay-body">
+                    <div class="form-group">
+                        <label>Nama Toko:</label>
+                        <input id="manualInputName" type="text" placeholder="Masukkan nama toko">
+                    </div>
+                    <div class="form-group">
+                        <label>Alamat Toko:</label>
+                        <input id="manualInputAddress" type="text" placeholder="Masukkan alamat lengkap">
+                    </div>
+                    <div class="form-group">
+                        <label>Nomor Telepon:</label>
+                        <input id="manualInputPhone" type="text" placeholder="Masukkan nomor telepon">
+                    </div>
+                </div>
+                <div class="overlay-buttons">
+                    <button class="btn btn-primary" id="saveManualInputBtn">Simpan Data</button>
+                </div>
+            </div>
+        </div>
+
         <div class="folder-tabs">
             <div class="tab-item active" data-tab="home">
                 <span class="tab-icon"><i class="fas fa-home"></i></span>
@@ -1348,6 +1375,7 @@
 
         <div class="add-menu" id="addMenu">
             <div class="add-menu-item" data-action="quick-input">Input Data Cepat</div>
+			<div class="add-menu-item" data-action="manual-input">Input Data Manual</div>
             <div class="add-menu-item" data-action="scan-card">Pindai Kartu Nama</div>
             <div class="add-menu-item" data-action="ambil-kontak">Ambil Data Kontak</div>
         </div>
