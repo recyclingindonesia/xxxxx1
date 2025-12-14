@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>OmniPost Pro - Blogger Hybrid SEO Generator</title>
+
+    <!-- Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Cropper.js -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
+    <style>
+        :root {
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --border-color: #334155;
+            --radius-xl: 1rem;
+            --safe-bottom: env(safe-area-inset-bottom, 20px);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            margin: 0;
+            padding-bottom: calc(40px + var(--safe-bottom));
+        }
+
+        .hidden { display: none !important; }
+        .flex { display: flex; }
+        .flex-col { flex-direction: column; }
+        .w-full { width: 100%; }
+        .gap-2 { gap: 0.5rem; }
+        .text-center { text-align: center; }
+
+        /* Navbar */
+        .navbar {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(12px);
+            position: sticky; top: 0; z-index: 30;
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem;
+            padding-top: max(1rem, env(safe-area-inset-top));
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .app-logo {
+            font-size: 1.25rem; font-weight: 800;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        /* Container */
+        .container { max-width: 30rem; margin: 0 auto; padding: 1rem; }
+
+        /* Identity Badge */
+        .identity-card {
+            display: flex; align-items: center; justify-content: space-between;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1));
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            padding: 0.75rem 1rem; border-radius: 1rem; margin-bottom: 1rem;
+        }
+        .id-content { display: flex; align-items: center; gap: 0.75rem; }
+        .id-avatar {
+            width: 2.5rem; height: 2.5rem; flex-shrink: 0;
+            background: linear-gradient(135deg, var(--primary), #a855f7);
+            color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-weight: 700;
+        }
+        .id-info h4 { margin: 0; font-size: 0.95rem; color: white; }
+        .id-info p { margin: 0; font-size: 0.75rem; color: var(--text-muted); }
+
+        /* Cards */
+        .preview-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            overflow: hidden; margin-bottom: 1rem;
+            position: relative;
+        }
+
+        /* Image Handling */
+        .media-placeholder {
+            aspect-ratio: 16/9; background: #182234;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: var(--text-muted); position: relative; overflow: hidden;
+        }
+        .media-preview { width: 100%; height: 100%; object-fit: contain; background: black; }
+
+        .image-tools { position: absolute; top: 1rem; right: 1rem; display: flex; gap: 0.5rem; z-index: 20; }
+        .tool-btn {
+            background: rgba(0,0,0,0.6); color: white; border: 1px solid rgba(255,255,255,0.2);
+            width: 2.5rem; height: 2.5rem; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(4px);
+        }
+
+        /* AI Section & Inputs */
+        .ai-section {
+            background: #262f40; border-top: 1px solid var(--border-color);
+            padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem;
+        }
+        .ai-label { font-size: 0.75rem; color: var(--primary); font-weight: 700; display: flex; align-items: center; gap: 0.35rem; }
+
+        .input-dark, .ai-prompt-input, .tone-select, .caption-input {
+            width: 100%; background: var(--bg-body); border: 1px solid var(--border-color);
+            color: white; padding: 0.75rem; border-radius: 0.5rem; font-size: 0.9rem; outline: none;
+            font-family: inherit;
+        }
+
+        /* FIX: Prompt Textarea Style */
+        .ai-prompt-input {
+            resize: none;
+            min-height: 80px;
+            padding-right: 6rem; /* Ruang untuk tombol Salin/Hapus */
+            padding-top: 1rem;
+        }
+        .caption-input { resize: none; min-height: 120px; }
+
+        .ai-btn {
+            background: linear-gradient(135deg, var(--primary), #a855f7); color: white; border: none;
+            padding: 0.75rem; border-radius: 0.75rem; font-size: 0.85rem; font-weight: 700;
+            display: flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; width: 100%;
+            box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3); transition: transform 0.1s;
+        }
+        .ai-btn:active { transform: scale(0.98); }
+
+        /* MODAL FIX: Removed gap from modal-content */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px);
+            z-index: 60; display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .modal-content {
+            background: var(--bg-card); width: 90%; max-width: 24rem;
+            border-radius: 1rem; padding: 1.5rem; border: 1px solid var(--border-color);
+            display: flex; flex-direction: column;
+            /* GAP REMOVED: Elements inside should use their own margins for cleaner spacing */
+        }
+    </style>
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <span class="app-logo"><i class="ph-fill ph-rocket-launch"></i> OmniPost Pro</span>
+        <button onclick="openSettings()" class="tool-btn" style="width: 2rem; height: 2rem; border: none; background: transparent;">
+            <i class="ph-fill ph-gear" style="font-size: 1.5rem;"></i>
+        </button>
+    </nav>
+
+    <main class="container">
+
+        <!-- IDENTITAS PENGGUNA -->
+        <div id="identityBadge" class="identity-card hidden">
+            <div class="id-content">
+                <div class="id-avatar" id="idAvatar">ME</div>
+                <div class="id-info">
+                    <h4 id="idName">Nama Pengguna</h4>
+                    <p id="idRole">Content Creator</p>
+                </div>
+            </div>
+            <button onclick="openSettings()" class="tool-btn" style="background: transparent; border: none;">
+                <i class="ph-bold ph-pencil-simple"></i>
+            </button>
+        </div>
+
+        <!-- AREA GAMBAR & EDITOR -->
+        <div class="preview-card">
+            <!-- Tempat Gambar (Hanya untuk PREVIEW dan CROP - TIDAK DI-BASE64 ke Kode Final) -->
+            <div id="mediaArea" class="media-placeholder">
+                <img id="imgPreview" class="media-preview hidden">
+                <div id="wmPreview" style="position:absolute; bottom:5%; right:5%; padding:4px 8px; background:rgba(0,0,0,0.5); border-radius:4px; color:white; font-size:0.8rem; display:none;"></div>
+
+                <div id="placeholderText" class="text-center">
+                    <i class="ph-duotone ph-image" style="font-size: 3rem; margin-bottom: 0.5rem; color: var(--primary);"></i>
+                    <p style="margin: 0; font-size: 0.9rem;">Preview Gambar (Tidak dimasukkan ke kode final)</p>
+                </div>
+
+                <!-- Overlay Tools (Crop/Delete) -->
+                <div id="imageTools" class="image-tools hidden">
+                    <button onclick="openCropModal()" class="tool-btn" title="Crop Gambar"><i class="ph-bold ph-crop"></i></button>
+                    <!-- Download Image with SEO Name -->
+                    <button onclick="downloadImageWithSeoName()" class="tool-btn" title="Simpan dengan Nama SEO" style="background: #0d9488; border-color: #2dd4bf;"><i class="ph-bold ph-download"></i></button>
+                    <!-- Watermark dihilangkan karena gambar harus diupload manual -->
+                    <button onclick="resetMedia()" class="tool-btn" style="color:#ef4444; border-color:rgba(239,68,68,0.5)" title="Hapus Gambar"><i class="ph-bold ph-trash"></i></button>
+                </div>
+            </div>
+
+            <!-- Tombol Upload -->
+            <div id="uploadActions" style="padding: 1rem; display: flex; gap: 0.5rem; justify-content: center; background: #262f40;">
+                <button onclick="document.getElementById('fileInput').click()" class="ai-btn" style="background: #334155; width: auto; flex: 1;">
+                    <i class="ph-bold ph-image"></i> Pilih Gambar
+                </button>
+                <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handleFile(this)">
+            </div>
+
+            <!-- AI WRITER SECTION (Redesigned UI) -->
+            <div class="ai-section">
+                <div class="ai-label"><i class="ph-fill ph-sparkle"></i> 🚀 AI Writer & Prompt Helper</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: -0.5rem; margin-bottom: 0.5rem;">Buat, edit, dan salin instruksi dengan cepat.</div>
+
+                <div style="position: relative;">
+                    <textarea id="aiPrompt" class="ai-prompt-input" placeholder="Instruksi / Prompt AI: Cth 'Tulis artikel 500 kata tentang fitur-fitur terbaik produk ini dengan nada meyakinkan.'"></textarea>
+                    <!-- Tools overlay -->
+                    <div style="position: absolute; top: 0.5rem; right: 0.5rem; display: flex; gap: 0.25rem;">
+                        <button onclick="copyPrompt()" class="tool-btn" style="width: 3rem; height: 1.5rem; border-radius: 0.25rem; background: rgba(255,255,255,0.1); font-size: 0.7rem; padding: 0; border: 1px solid rgba(255,255,255,0.2);">📋 Salin</button>
+                        <button onclick="document.getElementById('aiPrompt').value = ''" class="tool-btn" style="width: 3rem; height: 1.5rem; border-radius: 0.25rem; background: rgba(255,255,255,0.1); font-size: 0.7rem; padding: 0; border: 1px solid rgba(255,255,255,0.2);">🗑️ Hapus</button>
+                    </div>
+                </div>
+
+                <div class="flex gap-2">
+                    <select id="aiTone" class="tone-select" style="flex: 1;">
+                        <option value="gaul">😎 Gaul</option>
+                        <option value="formal">💼 Formal</option>
+                        <option value="soft">😊 Soft Selling</option>
+                    </select>
+                    <button onclick="generateCaption()" id="btnAi" class="ai-btn" style="width: 65%;">
+                        <i class="ph-fill ph-magic-wand"></i> Buat Konten & Saran SEO
+                    </button>
+                </div>
+                <div id="aiLoader" class="hidden text-center"><div class="loader" style="display:inline-block"></div></div>
+            </div>
+
+            <!-- HASIL TEXT -->
+            <div style="padding: 0 1rem 1rem 1rem; background: #262f40;">
+                <textarea id="captionText" class="caption-input" placeholder="Hasil tulisan AI akan muncul di sini... Harap edit dan koreksi."></textarea>
+            </div>
+        </div>
+
+        <!-- SETELAN SEO & CTA (BLOGGER SPECIFIC) -->
+        <h3 style="margin-top: 1.5rem; margin-bottom: 0.5rem; font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">
+            <i class="ph-fill ph-sliders-horizontal"></i> Optimasi Blog & Tindakan (CTA)
+        </h3>
+
+        <div class="preview-card seo-group" style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
+            <!-- Judul Postingan -->
+            <div>
+                <label class="ai-label">Judul Postingan (H1)</label>
+                <input type="text" id="postTitle" class="input-dark" placeholder="Judul Artikel Menarik...">
+            </div>
+
+            <!-- Permalink & Label -->
+            <div class="flex gap-2">
+                <div style="flex:1">
+                    <label class="ai-label">Permalink (URL)</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="postPermalink" class="input-dark" placeholder="judul-url-bersih" style="color:#4ade80;">
+                        <button onclick="generateSmartPermalink()" class="tool-btn" style="border-radius:0.5rem; width:auto; font-size:1.2rem;"><i class="ph-bold ph-lightning"></i></button>
+                    </div>
+                </div>
+            </div>
+            <div>
+                 <label class="ai-label">Label / Kategori</label>
+                 <div class="flex gap-2">
+                    <input type="text" id="postLabels" class="input-dark" placeholder="Tips, Tutorial, Promo">
+                    <button onclick="suggestLabels()" class="tool-btn" style="border-radius:0.5rem; width:auto; font-size:0.8rem;">Saran</button>
+                 </div>
+            </div>
+
+            <!-- META DESCRIPTION (Tambahan untuk copy) -->
+            <div>
+                <label class="ai-label">Meta Deskripsi (Untuk Sidebar Blogger)</label>
+                <textarea id="metaDesc" class="caption-input" placeholder="Ringkasan 150-160 karakter untuk SEO" style="min-height: 50px; padding: 0.5rem;"></textarea>
+            </div>
+
+
+            <!-- CTA SECTION (RUANG TINDAKAN) -->
+            <div style="border-top: 1px dashed var(--border-color); padding-top: 1rem;">
+                <label class="ai-label" style="margin-bottom: 0.5rem;"><i class="ph-bold ph-cursor-click"></i> Tombol Aksi (CTA) - Copy ke Body Artikel</label>
+                <div class="flex flex-col gap-2">
+                    <div class="flex gap-2">
+                        <input type="text" id="ctaText" class="input-dark" placeholder="Teks Tombol (Cth: Beli via WA)">
+                        <select id="ctaColor" class="input-dark" style="width: 35%;">
+                            <option value="green">Hijau WA</option>
+                            <option value="blue">Biru Link</option>
+                            <option value="orange">Oranye</option>
+                        </select>
+                    </div>
+                    <input type="text" id="ctaLink" class="input-dark" placeholder="Link Tujuan (https://...)">
+                    <button onclick="fillCtaFromIdentity()" style="background:none; border:none; color:var(--primary); text-align:left; font-size:0.75rem; cursor:pointer;">
+                        <u>Ambil dari Data Identitas</u>
+                    </button>
+                </div>
+            </div>
+
+            <!-- GENERATE BUTTON -->
+            <button onclick="generateSafeBloggerCode()" class="ai-btn" style="margin-top: 1rem; background: linear-gradient(135deg, #f59e0b, #d97706);">
+                <i class="ph-bold ph-code"></i> Generate HTML Konten
+            </button>
+        </div>
+
+    </main>
+
+    <!-- MODAL HASIL KODE -->
+    <div id="codeModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 95%; height: 80vh; background: #000; padding:0;">
+            <div style="padding:1rem; border-bottom:1px solid #333; display:flex; justify-content:space-between; align-items:center;">
+                <h4 style="margin:0; color:white;">Kode HTML Konten Siap Paste</h4>
+                <button onclick="document.getElementById('codeModal').classList.remove('active')" style="background:none; border:none; color:white; font-size:1.5rem;">&times;</button>
+            </div>
+            <textarea id="outputCode" style="width:100%; height:100%; background:#111; color:#4ade80; border:none; padding:1rem; font-family:monospace; resize:none;"></textarea>
+            <div style="padding:1rem; border-top:1px solid #333; display:flex; gap:1rem;">
+                <button onclick="copyCodeAndInstructions()" class="ai-btn"><i class="ph-bold ph-copy"></i> Salin Konten & Instruksi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL SETTINGS (SUDAH DIPERBAIKI SPASI) -->
+    <div id="settingsModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Pengaturan</h3>
+            <label class="ai-label">API Key Gemini (AI)</label>
+            <input type="password" id="apiKeyInput" class="input-dark" placeholder="Paste API Key disini...">
+
+            <label class="ai-label" style="margin-top:1rem;">Identitas & Kontak</label>
+            <input type="text" id="setIdName" class="input-dark" placeholder="Nama Anda / Bisnis">
+            <input type="text" id="setIdRole" class="input-dark" style="margin-top:0.5rem;" placeholder="Role (Cth: Admin)">
+            <input type="text" id="setIdPhone" class="input-dark" style="margin-top:0.5rem;" placeholder="Nomor WA (08...)">
+            <input type="text" id="setIdLink" class="input-dark" style="margin-top:0.5rem;" placeholder="Website / LinkTree">
+
+            <div class="flex gap-2" style="margin-top:1rem;">
+                <button onclick="saveSettings()" class="ai-btn">Simpan</button>
+                <button onclick="document.getElementById('settingsModal').classList.remove('active')" class="ai-btn" style="background:#334155;">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CROP -->
+    <div id="cropModal" class="modal-overlay">
+        <div class="modal-content" style="width:100%; height:90vh; max-width:none; padding:0; background:black;">
+            <div style="flex:1; overflow:hidden;"><img id="imageToCrop" style="max-width:100%;"></div>
+            <div style="padding:1rem; display:flex; justify-content:space-around; background:#1e293b;">
+                <button onclick="cropInstance.rotate(90)" class="tool-btn"><i class="ph-bold ph-arrow-clockwise"></i></button>
+                <button onclick="performCrop()" class="ai-btn" style="width:auto; padding:0 2rem;">OK</button>
+                <button onclick="closeCrop()" class="tool-btn" style="color:red;"><i class="ph-bold ph-x"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- OVERLAY LOADING -->
+    <div id="processOverlay" class="modal-overlay" style="z-index: 200;">
+        <div class="text-center">
+            <div class="loader" style="width:40px; height:40px; margin:0 auto 1rem auto;"></div>
+            <p style="color:white; font-weight:600;">Sedang Memproses...</p>
+        </div>
+    </div>
+
+    <script>
+        const CONFIG = { keyStore: 'op_api', idStore: 'op_id' };
+        let currentFile = null;
+        let cropInstance = null;
+
+        window.onload = () => { loadSettings(); };
+
+        // UTILITY FUNCTIONS
+        function slugify(text) {
+            const stopWords = ['dan', 'yang', 'di', 'ke', 'dari', 'untuk', 'pada', 'adalah', 'ini', 'itu', 'dengan', 'serta'];
+            let slug = text.toLowerCase().replace(/[^a-z0-9\s-]/g, '');
+            let words = slug.split(/\s+/).filter(w => !stopWords.includes(w) && w.length > 1);
+            return words.join('-');
+        }
+
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = error => reject(error);
+            });
+        }
+        // FIX: Menyederhanakan dan mengamankan fungsi copyTextToClipboard (synchronous execCommand)
+        function copyTextToClipboard(text) {
+             const t = document.createElement("textarea");
+             t.value = text;
+             t.style.position='absolute';
+             t.style.left='-9999px';
+             document.body.appendChild(t);
+             t.focus();
+             t.select();
+
+             try {
+                document.execCommand('copy');
+             } catch (err) {
+                console.error('Penyalinan gagal:', err);
+             }
+             document.body.removeChild(t);
+        }
+
+        // --- AI PROMPT HELPER FUNCTIONS ---
+        function copyPrompt() {
+            const prompt = document.getElementById('aiPrompt').value;
+            if (prompt) {
+                copyTextToClipboard(prompt);
+                alert('Instruksi AI berhasil disalin!');
+            }
+        }
+
+        // SETTINGS & IDENTITY
+        function openSettings() {
+            document.getElementById('settingsModal').classList.add('active');
+            document.getElementById('apiKeyInput').value = localStorage.getItem(CONFIG.keyStore) || '';
+            const data = JSON.parse(localStorage.getItem(CONFIG.idStore) || '{}');
+            document.getElementById('setIdName').value = data.name || '';
+            document.getElementById('setIdRole').value = data.role || '';
+            document.getElementById('setIdPhone').value = data.phone || '';
+            document.getElementById('setIdLink').value = data.link || '';
+        }
+
+        function saveSettings() {
+            localStorage.setItem(CONFIG.keyStore, document.getElementById('apiKeyInput').value);
+            const data = {
+                name: document.getElementById('setIdName').value,
+                role: document.getElementById('setIdRole').value,
+                phone: document.getElementById('setIdPhone').value,
+                link: document.getElementById('setIdLink').value
+            };
+            localStorage.setItem(CONFIG.idStore, JSON.stringify(data));
+            loadSettings();
+            document.getElementById('settingsModal').classList.remove('active');
+        }
+
+        function loadSettings() {
+            const data = JSON.parse(localStorage.getItem(CONFIG.idStore) || '{}');
+            if(data.name) {
+                document.getElementById('identityBadge').classList.remove('hidden');
+                document.getElementById('idName').textContent = data.name;
+                document.getElementById('idRole').textContent = data.role;
+                document.getElementById('idAvatar').textContent = data.name.substring(0,2).toUpperCase();
+            }
+        }
+
+        // IMAGE HANDLING (Hanya untuk Preview & Crop)
+        function handleFile(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('imgPreview').src = e.target.result;
+                    document.getElementById('imgPreview').classList.remove('hidden');
+                    document.getElementById('placeholderText').classList.add('hidden');
+                    document.getElementById('imageTools').classList.remove('hidden');
+                    currentFile = input.files[0];
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function resetMedia() {
+            currentFile = null;
+            document.getElementById('imgPreview').src = '';
+            document.getElementById('imgPreview').classList.add('hidden');
+            document.getElementById('placeholderText').classList.remove('hidden');
+            document.getElementById('imageTools').classList.add('hidden');
+            document.getElementById('fileInput').value = '';
+        }
+
+        function openCropModal() {
+            if(!currentFile) return;
+            document.getElementById('cropModal').classList.add('active');
+            const img = document.getElementById('imageToCrop');
+            img.src = document.getElementById('imgPreview').src;
+            if(cropInstance) cropInstance.destroy();
+            cropInstance = new Cropper(img, { viewMode: 1, autoCropArea: 0.9 });
+        }
+        function closeCrop() { document.getElementById('cropModal').classList.remove('active'); if(cropInstance) cropInstance.destroy(); }
+        function performCrop() {
+            cropInstance.getCroppedCanvas().toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                document.getElementById('imgPreview').src = url;
+                currentFile = new File([blob], "cropped.jpg", { type: "image/jpeg" });
+                closeCrop();
+            });
+        }
+
+        // Function to download image with SEO filename
+        function downloadImageWithSeoName() {
+            if (!currentFile) {
+                alert("Tidak ada gambar untuk disimpan.");
+                return;
+            }
+
+            const title = document.getElementById('postTitle').value.trim();
+            if (!title) {
+                alert("Harap isi 'Judul Postingan' untuk menghasilkan nama file SEO yang relevan.");
+                return;
+            }
+
+            let finalFilename = slugify(title) || 'gambar-seo';
+
+            // Get file extension (safely check mimeType/name)
+            let fileExtension = 'jpg';
+            if (currentFile.type) {
+                fileExtension = currentFile.type.split('/')[1] || 'jpg';
+            } else if (currentFile.name) {
+                fileExtension = currentFile.name.split('.').pop() || 'jpg';
+            }
+            finalFilename += '.' + fileExtension;
+
+            const url = URL.createObjectURL(currentFile);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = finalFilename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            alert(`Gambar disimpan sebagai:\n${finalFilename}\n\nLangkah selanjutnya: Upload file ini secara manual ke Blogger.`);
+        }
+
+
+        // AI GENERATOR LOGIC
+        async function generateCaption() {
+            // FIX: Menggunakan document.getElementById untuk mengambil nilai input API Key
+            const key = document.getElementById('apiKeyInput').value || localStorage.getItem(CONFIG.keyStore);
+            if(!key) return alert("API Key belum diisi di Pengaturan!");
+
+            const promptText = document.getElementById('aiPrompt').value;
+            const tone = document.getElementById('aiTone').value;
+            const btn = document.getElementById('btnAi');
+            const loader = document.getElementById('aiLoader');
+
+            btn.classList.add('hidden'); loader.classList.remove('hidden');
+
+            try {
+                let parts = [];
+                let systemPrompt = `Anda adalah penulis blog dan social media expert.
+                Tugas: Buat artikel pendek yang menarik berdasarkan gambar ini.
+                Topik/Instruksi Pengguna: "${promptText}".
+                Tone: ${tone}.
+
+                Format Output:
+                - Isi artikel minimal 3 paragraf.
+                - Gunakan bahasa Indonesia yang baik.
+                - Jangan gunakan Markdown kasar (seperti **), gunakan format teks biasa yang rapi.
+                - Di akhir output, berikan saran Judul (H1), Meta Deskripsi (150-160 karakter) yang sangat SEO friendly dan Permalink (url slug) yang bersih. Gunakan pemisah '---' sebelum bagian saran SEO.
+                `;
+                parts.push({ text: systemPrompt });
+
+                if (currentFile) {
+                    const b64 = await fileToBase64(currentFile);
+                    parts.push({ inlineData: { mimeType: "image/jpeg", data: b64 } });
+                }
+
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${key}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ contents: [{ parts: parts }] })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    const error = data?.error?.message || res.statusText;
+                    throw new Error(`Permintaan API gagal: ${error}`);
+                }
+
+                // Validasi struktur respons AI
+                if (!data.candidates || !data.candidates[0]?.content?.parts || !data.candidates[0].content.parts[0]?.text) {
+                    console.error("Struktur respons API tidak valid:", data);
+                    throw new Error("Gagal memproses respons dari AI. Coba lagi atau periksa format output model.");
+                }
+
+                const text = data.candidates[0].content.parts[0].text;
+
+                // FIX: Mengganti destructuring dengan pemisahan array tradisional untuk stabilitas parser
+                const splitParts = text.split('---');
+                const content = splitParts[0];
+                const seoSuggestions = splitParts[1];
+
+                // Update Main Content
+                document.getElementById('captionText').value = content.trim();
+
+                // 1. QUICK FILL TITLE from first line
+                const lines = content.trim().split('\n');
+                if(lines.length > 0 && lines[0].length < 100) {
+                    document.getElementById('postTitle').value = lines[0].replace(/[*#]/g, '').trim();
+                }
+
+                // 2. REFINE TITLE/PERMALINK/META from SEO Suggestions
+                if (seoSuggestions) {
+                    const permalinkMatch = seoSuggestions.match(/Permalink:\s*([^\n\r]+)/i);
+                    const metaDescMatch = seoSuggestions.match(/Meta\s*Deskripsi:\s*([^\n\r]+)/i);
+                    const titleMatch = seoSuggestions.match(/Judul:\s*([^\n\r]+)/i);
+
+                    // A. Set final Title (overrides quick fill if explicit suggestion exists)
+                    if (titleMatch && titleMatch[1]) {
+                        document.getElementById('postTitle').value = titleMatch[1].trim();
+                    }
+
+                    // B. Set Permalink (if explicitly suggested)
+                    if (permalinkMatch && permalinkMatch[1]) {
+                        document.getElementById('postPermalink').value = permalinkMatch[1].trim();
+                    }
+
+                    // C. Set Meta Desc
+                    const defaultMeta = content.trim().substring(0, 150).replace(/\n/g, ' ') + '...';
+                    document.getElementById('metaDesc').value = metaDescMatch && metaDescMatch[1] ? metaDescMatch[1].trim() : defaultMeta;
+                } else {
+                    // If no explicit SEO suggestions found, ensure we at least fill the meta desc
+                    const defaultMeta = content.trim().substring(0, 150).replace(/\n/g, ' ') + '...';
+                    document.getElementById('metaDesc').value = defaultMeta;
+                }
+
+                // 3. MANDATORY: GENERATE PERMALINK after final title is set
+                generateSmartPermalink();
+
+            } catch(e) {
+                alert("Gagal: " + e.message);
+            } finally {
+                btn.classList.remove('hidden'); loader.classList.add('hidden');
+            }
+        }
+
+        // SEO & CTA TOOLS
+        function generateSmartPermalink() {
+            const title = document.getElementById('postTitle').value;
+            if (!title) return;
+            document.getElementById('postPermalink').value = slugify(title);
+        }
+
+        function suggestLabels() {
+            const txt = document.getElementById('captionText').value.toLowerCase();
+            let labs = [];
+            if(txt.includes('tips') || txt.includes('cara')) labs.push('Tutorial');
+            if(txt.includes('promo') || txt.includes('diskon')) labs.push('Promo');
+            if(txt.includes('review') || txt.includes('ulasan')) labs.push('Review');
+            if(labs.length === 0) labs.push('Umum');
+            document.getElementById('postLabels').value = labs.join(', ');
+        }
+
+        function fillCtaFromIdentity() {
+            const data = JSON.parse(localStorage.getItem(CONFIG.idStore) || '{}');
+            if(data.phone) {
+                let p = data.phone.replace(/\D/g,'');
+                if(p.startsWith('0')) p = '62'+p.substring(1);
+                document.getElementById('ctaLink').value = `https://wa.me/${p}`; // Hapus teks statis
+                document.getElementById('ctaText').value = "Hubungi via WhatsApp";
+                document.getElementById('ctaColor').value = "green";
+            } else if(data.link) {
+                document.getElementById('ctaLink').value = data.link.startsWith('http') ? data.link : 'https://'+data.link;
+                document.getElementById('ctaText').value = "Kunjungi Website";
+                document.getElementById('ctaColor').value = "blue";
+            } else {
+                alert("Isi data identitas di Pengaturan dulu!");
+            }
+        }
+
+        // GENERATOR FINAL HTML (HYBRID MODE + DYNAMIC JS)
+        async function generateSafeBloggerCode() {
+            const caption = document.getElementById('captionText').value;
+            if(!caption) return alert("Konten Artikel harus diisi!");
+
+            // Konten Text (Safe Paragraphs)
+            const contentHtml = caption.split('\n').map(line => {
+                const l = line.trim().replace(/[*#]/g, '');
+                if(!l) return '';
+                if(l.length < 50 && l.toUpperCase() === l) return `<h3>${l}</h3>`;
+                return `<p>${l}</p>`;
+            }).join('');
+
+            // CTA Logic
+            let ctaHtml = '';
+            const ctaT = document.getElementById('ctaText').value;
+            const ctaL = document.getElementById('ctaLink').value;
+            const ctaC = document.getElementById('ctaColor').value;
+
+            const WA_MSG_TEXT = encodeURIComponent("Halo, saya tertarik dengan postingan ini:");
+            const isWA = ctaL.includes('wa.me');
+
+            if(ctaT && ctaL) {
+                let colorCss = 'background: #2563eb;';
+                if(ctaC === 'green') colorCss = 'background: #25D366;';
+                if(ctaC === 'orange') colorCss = 'background: #f97316;';
+
+                // Jika WA, gunakan onclick untuk memanggil fungsi yang DIHARAPKAN ada di Template/Widget
+                if (isWA) {
+                    // Kita asumsikan ctaL sudah berbentuk https://wa.me/62...
+                    ctaHtml = `
+<div style="margin: 2.5rem 0; text-align: center;">
+    <a href="javascript:void(0)" onclick="opDynamicWaLink('${ctaL}', '${WA_MSG_TEXT}')" style="display: inline-block; padding: 12px 24px; border-radius: 50px; color: white; text-decoration: none; font-weight: bold; font-size: 1rem; box-shadow: 0 4px 10px rgba(0,0,0,0.2); ${colorCss}">
+        ${ctaT} &#10132;
+    </a>
+</div>`;
+                } else {
+                    // Link biasa
+                    ctaHtml = `
+<div style="margin: 2.5rem 0; text-align: center;">
+    <a href="${ctaL}" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 12px 24px; border-radius: 50px; color: white; text-decoration: none; font-weight: bold; font-size: 1rem; box-shadow: 0 4px 10px rgba(0,0,0,0.2); ${colorCss}">
+        ${ctaT} &#10132;
+    </a>
+</div>`;
+                }
+            }
+
+            // Instruksi Gambar untuk Hybrid Mode
+            const imageInstruction = `
+<!-- PENTING: Untuk SEO dan kecepatan maksimal, UPLOAD GAMBAR UTAMA secara MANUAL di EDITOR BLOGGER (Insert Image > Upload from computer) -->
+<p style="text-align: center; font-style: italic; color: #f97316; border: 1px dashed #f97316; padding: 1em; border-radius: 4px; font-size: 0.9em;">
+    [TEMPAT GAMBAR UTAMA ANDA] <br>
+    Jangan lupa isi **Teks Alt** gambar dengan Judul Postingan!
+</p>
+<br>`;
+
+            // --- REUSABLE BLOGGER WIDGET CODE ---
+            const bloggerWidgetCode = `
+<!-- ========================================================================= -->
+<!-- LANGKAH 1: PASTE KODE INI SATU KALI DI WIDGET HTML/JAVASCRIPT TEMA BLOGGER -->
+<!-- Kode ini berisi CSS dan JS untuk Tombol Dinamis & Kotak Salin Link. -->
+<!-- Jika sudah pernah dipaste, JANGAN PASTE LAGI. -->
+<!-- ========================================================================= -->
+<style>
+/* CSS UNTUK KOTAK SALIN LINK */
+.op-copy-box-wrapper {
+  border: 1px solid #ddd;
+  padding: 15px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  text-align: center;
+  font-family: sans-serif;
+  margin: 20px auto;
+  max-width: 400px;
+}
+.op-copy-info {
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #333;
+  font-size: 14px;
+}
+.op-copy-btn {
+  background-color: #ff5722;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s;
+}
+.op-copy-btn:hover {
+  background-color: #e64a19;
+}
+#op-copy-status {
+  margin-top: 10px;
+  color: green;
+  font-size: 12px;
+  font-weight: bold;
+}
+</style>
+
+<script>
+    // FUNGSI 1: DYNAMIC WHATSAPP LINK
+    function opDynamicWaLink(waBaseUrl, encodedMessage) {
+        const title = document.title;
+        const url = window.location.href;
+        const fullMessage = encodedMessage + ' "' + encodeURIComponent(title) + '" - ' + encodeURIComponent(url);
+        const cleanWaBaseUrl = waBaseUrl.split('?')[0];
+        window.open(cleanWaBaseUrl + '?text=' + fullMessage, '_blank');
+    }
+
+    // FUNGSI 2: SALIN JUDUL DAN LINK (Hanya menggunakan opFallbackCopy untuk stabilitas)
+    function opCopyBlogData() {
+        const title = document.title;
+        const url = window.location.href;
+        const textToCopy = "Baca artikel ini:\\n" + title + "\\n\\nLink: " + url; // Menggunakan \\n untuk new line di string JS
+
+        opFallbackCopy(textToCopy);
+    }
+
+    // FUNGSI 3: UTILITY DAN FALLBACK (execCommand)
+    function opFallbackCopy(text) {
+        var textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = 'absolute'; // Penting agar bisa diselect
+        textArea.style.left = '-9999px';
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            opShowSuccessMessage();
+        } catch (err) {
+            // Jika semua gagal, tampilkan alert agar pengguna salin manual
+            alert('Gagal menyalin. Silakan salin manual:\\n' + text);
+        }
+        document.body.removeChild(textArea);
+    }
+
+    function opShowSuccessMessage() {
+        var status = document.getElementById("op-copy-status");
+        if(status) {
+            status.style.display = "block";
+            setTimeout(function() {
+                status.style.display = "none";
+            }, 2000);
+        }
+    }
+
+    // Auto-fill Judul di Kotak Salin Link
+    document.addEventListener("DOMContentLoaded", function() {
+        var pageTitle = document.title;
+        var displayElement = document.getElementById("op-blog-title-display");
+        if(displayElement) {
+            // Kita hapus nama blog jika ada
+            const titleParts = pageTitle.split(' - ');
+            displayElement.innerText = titleParts.length > 1 ? titleParts[0] : pageTitle;
+        }
+    });
+
+</script>
+<!-- ========================================================================= -->
+<!-- AKHIR DARI KODE WIDGET BLOGGER (LANGKAH 1) -->
+<!-- ========================================================================= -->
+`;
+
+            // FINAL CODE ASSEMBLY
+            const finalCode = `
+<!-- OMNIPOST HYBRID GENERATED START -->
+<!-- ========================================================================================== -->
+<!-- PASTIKAN ANDA SUDAH MENYALIN KODE 'WIDGET BLOGGER' YANG ADA DI BAGIAN ATAS INI KE TEMA ANDA -->
+<!-- ========================================================================================== -->
+
+<!-- LANGKAH 2: PASTE KODE INI KE TAB 'TAMPILAN HTML' DI EDITOR POSTINGAN BLOGGER -->
+
+<div style="font-family: sans-serif; line-height: 1.7; color: #333; font-size: 16px;">
+
+    ${imageInstruction}
+
+    <!-- Kotak Salin Link (Memanggil JS yang ada di Template/Widget) -->
+    <div class="op-copy-box-wrapper">
+        <div class="op-copy-info">
+            <span id="op-blog-title-display">Judul Artikel & Link</span>
+        </div>
+        <button class="op-copy-btn" onclick="opCopyBlogData()">
+            📋 Salin Judul & Link
+        </button>
+        <div id="op-copy-status" style="display:none;">Berhasil disalin!</div>
+    </div>
+    <br>
+
+    ${contentHtml}
+    ${ctaHtml}
+</div>
+
+<!-- OMNIPOST HYBRID GENERATED END -->`;
+
+            // Kami akan menyajikan KODE WIDGET dan KODE KONTEN di outputCode agar mudah dipisahkan
+            document.getElementById('outputCode').value = bloggerWidgetCode + "\n\n" + finalCode;
+            document.getElementById('codeModal').classList.add('active');
+        }
+
+        // Copy button on modal
+        function copyCodeAndInstructions() {
+            const code = document.getElementById('outputCode').value;
+            const permalink = document.getElementById('postPermalink').value;
+            const labels = document.getElementById('postLabels').value;
+            const meta = document.getElementById('metaDesc').value;
+
+            const instructions = `
+LANGKAH PENTING SEO MAXIMAL:
+=========================================
+1. COPY & PASTE KODE WIDGET BLOGGER (BAGIAN ATAS) ke Tampilan Tema/Widget HTML/JS Blog Anda (Hanya SEKALI).
+2. COPY & PASTE KODE KONTEN (BAGIAN BAWAH) ke Tampilan HTML editor Postingan Blogger (PER POST).
+3. PASTE DATA INI ke SIDEBAR SETELAN ENTRi (Setelan Postingan):
+
+    -> Judul Postingan: ${document.getElementById('postTitle').value}
+    -> Tautan Permanen: ${permalink}
+    -> Label: ${labels}
+    -> Deskripsi Penelusuran (Meta Desc): ${meta}
+
+=========================================
+`;
+
+            copyTextToClipboard(instructions + code);
+            alert("Kode dan Instruksi SEO berhasil disalin!");
+        }
+    </script>
+</body>
+</html>
