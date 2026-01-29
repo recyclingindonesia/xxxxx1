@@ -1,26 +1,23 @@
 /**
- * CONFIGURATION - Now using PropertiesService for security.
- * Use setupSystem() to initialize these values.
+ * CONFIGURATION - Direct Posting (AI Removed).
  */
 const SPREADSHEET_ID = "1NgDZ6fzz30wH9pElVwoSepkkkPd73mmccl2WRCIyZ7A";
 
 function getSecrets() {
   const props = PropertiesService.getScriptProperties();
   return {
-    blogId: props.getProperty("BLOG_ID"),
-    apiKeys: props.getProperty("GEMINI_API_KEYS") ? props.getProperty("GEMINI_API_KEYS").split(",") : []
+    blogId: props.getProperty("BLOG_ID")
   };
 }
 
 /**
- * Setup Function - Jalankan ini satu kali di awal atau saat konfigurasi berubah.
+ * Setup Function - Jalankan ini satu kali di awal.
  */
-function setupSystem(blogId, geminiKeys) {
+function setupSystem(blogId) {
   const ss = getSS();
   const props = PropertiesService.getScriptProperties();
 
   if (blogId) props.setProperty("BLOG_ID", blogId);
-  if (geminiKeys) props.setProperty("GEMINI_API_KEYS", geminiKeys); // CSV format
 
   // Setup Users Sheet
   let userSheet = ss.getSheetByName("Users") || ss.insertSheet("Users");
@@ -32,7 +29,7 @@ function setupSystem(blogId, geminiKeys) {
   // Setup Posts Sheet
   let postSheet = ss.getSheetByName("Posts") || ss.insertSheet("Posts");
   if (postSheet.getLastRow() === 0) {
-    postSheet.appendRow(["Timestamp", "JSON-ID", "Post-ID", "Title", "Price", "Location", "SEO Content", "Blog URL", "Password", "Alt Text", "Photo-Data"]);
+    postSheet.appendRow(["Timestamp", "JSON-ID", "Post-ID", "Title", "Price", "Location", "Description", "Blog URL", "Password", "Alt Text", "Photo-Data"]);
     postSheet.getRange(1, 1, 1, 11).setFontWeight("bold").setBackground("#cfe2f3");
   }
 
@@ -81,7 +78,7 @@ function handleGetPosts(data) {
       userPosts.push({
         timestamp: values[i][0], jsonId: values[i][1], postId: values[i][2],
         title: values[i][3], price: values[i][4], location: values[i][5],
-        seoContent: JSON.parse(values[i][6]), blogUrl: values[i][7],
+        description: values[i][6], blogUrl: values[i][7],
         altText: values[i][9], photoData: values[i][10]
       });
     }
@@ -91,9 +88,8 @@ function handleGetPosts(data) {
 
 function handleCreatePost(data) {
   if (!findUserByPassword(data.password)) return jsonResponse({ success: false, message: "Unauthorized" });
-  const aiResult = generateSeoContent(data);
-  const bloggerRes = postToBlogger(data, aiResult);
-  savePostToSpreadsheet(data, aiResult, bloggerRes);
+  const bloggerRes = postToBlogger(data);
+  savePostToSpreadsheet(data, bloggerRes);
   return jsonResponse({ success: true, url: bloggerRes.url });
 }
 
@@ -115,65 +111,37 @@ function handleUpdatePost(data) {
   }
   if (rowIndex === -1) return jsonResponse({ success: false, message: "Data tidak ditemukan." });
 
-  // Keep original photo if not re-uploaded
   if (!data.photoData) data.photoData = existingPhotoData;
-
-  const aiResult = data.regenAi ? generateSeoContent(data) : {
-    seo_description: data.description,
-    labels: JSON.parse(values[rowIndex-1][6]).labels
-  };
 
   const secrets = getSecrets();
   if (existingPostId && secrets.blogId) {
     try {
-      const content = constructBloggerContent(data, aiResult);
-      Blogger.Posts.patch({ title: data.title.substring(0, 150), content: content, labels: aiResult.labels }, secrets.blogId, existingPostId);
+      const content = constructBloggerContent(data);
+      Blogger.Posts.patch({ title: data.title.substring(0, 150), content: content, labels: [] }, secrets.blogId, existingPostId);
     } catch (e) { Logger.log("Blogger update failed: " + e.message); }
   }
 
-  sheet.getRange(rowIndex, 4, 1, 4).setValues([[data.title, data.price, data.location, JSON.stringify(aiResult)]]);
+  sheet.getRange(rowIndex, 4, 1, 4).setValues([[data.title, data.price, data.location, data.description]]);
   sheet.getRange(rowIndex, 10, 1, 2).setValues([[data.alt_text, data.photoData]]);
   return jsonResponse({ success: true });
 }
 
-function generateSeoContent(data) {
-  const secrets = getSecrets();
-  const prompt = `Buatlah deskripsi jualan SEO friendly dalam Bahasa Indonesia untuk produk berikut:
-  Nama Produk: ${data.title}
-  Harga: ${data.price}
-  Lokasi: ${data.location}
-  Deskripsi Dasar: ${data.description}
-  Output JSON: { "seo_description": "...", "labels": ["tag1", "tag2"] }`;
-  for (const apiKey of secrets.apiKeys) {
-    try {
-      const res = UrlFetchApp.fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
-        method: "POST", contentType: "application/json", payload: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-      });
-      const json = JSON.parse(res.getContentText());
-      const rawText = json.candidates[0].content.parts[0].text;
-      const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-      if (jsonMatch) return JSON.parse(jsonMatch[0]);
-    } catch (err) { continue; }
-  }
-  throw new Error("AI Error or Limit reached.");
-}
-
-function constructBloggerContent(data, aiContent) {
+function constructBloggerContent(data) {
   const imgHtml = data.photoData ? `<div style="text-align: center;"><img alt="${data.alt_text}" src="${data.photoData}" style="max-width: 100%;" /></div><br />` : "";
-  return `${imgHtml}<p>${aiContent.seo_description}</p><ul><li>Harga: ${data.price}</li><li>Lokasi: ${data.location}</li><li>ID: ${data.jsonId}</li></ul>`;
+  return `${imgHtml}<p>${data.description}</p><ul><li>Harga: ${data.price}</li><li>Lokasi: ${data.location}</li><li>ID: ${data.jsonId}</li></ul>`;
 }
 
-function postToBlogger(data, aiContent) {
+function postToBlogger(data) {
   const secrets = getSecrets();
-  const content = constructBloggerContent(data, aiContent);
-  return Blogger.Posts.insert({ title: data.title.substring(0, 150), content: content, labels: aiContent.labels }, secrets.blogId);
+  const content = constructBloggerContent(data);
+  return Blogger.Posts.insert({ title: data.title.substring(0, 150), content: content, labels: [] }, secrets.blogId);
 }
 
-function savePostToSpreadsheet(data, aiContent, bloggerRes) {
+function savePostToSpreadsheet(data, bloggerRes) {
   const ss = getSS();
   const sheet = ss.getSheetByName("Posts") || ss.insertSheet("Posts");
-  if (sheet.getLastRow() === 0) sheet.appendRow(["Timestamp", "JSON-ID", "Post-ID", "Title", "Price", "Location", "SEO Content", "Blog URL", "Password", "Alt Text", "Photo-Data"]);
-  sheet.appendRow([new Date(), data.jsonId, bloggerRes.id, data.title, data.price, data.location, JSON.stringify(aiContent), bloggerRes.url, data.password, data.alt_text, data.photoData]);
+  if (sheet.getLastRow() === 0) sheet.appendRow(["Timestamp", "JSON-ID", "Post-ID", "Title", "Price", "Location", "Description", "Blog URL", "Password", "Alt Text", "Photo-Data"]);
+  sheet.appendRow([new Date(), data.jsonId, bloggerRes.id, data.title, data.price, data.location, data.description, bloggerRes.url, data.password, data.alt_text, data.photoData]);
 }
 
 function findUserByPassword(password) {

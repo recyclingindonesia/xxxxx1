@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OmniPost Pro - Blogger Hybrid SEO Generator</title>
+    <title>OmniPost Pro - Blogger Direct Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style> .hidden { display: none; } </style>
 </head>
@@ -11,7 +11,7 @@
     <div class="container mx-auto px-4 py-8 max-w-4xl">
         <header class="text-center mb-10">
             <h1 class="text-4xl font-bold text-blue-600 mb-2">OmniPost Pro</h1>
-            <p class="text-gray-600">Blogger Hybrid SEO Generator & Sales Manager</p>
+            <p class="text-gray-600">Blogger Sales Post Manager (Direct Edition)</p>
         </header>
 
         <!-- Login View -->
@@ -19,7 +19,7 @@
             <h2 class="text-2xl font-semibold mb-6 text-center">Masuk ke Sistem</h2>
             <div class="space-y-4">
                 <input type="password" id="login-password" class="w-full rounded-md border-gray-300 shadow-sm border p-2" placeholder="Password Akses">
-                <button onclick="handleLogin()" id="btn-login" class="w-full bg-blue-600 text-white font-bold py-2 rounded">Masuk</button>
+                <button onclick="handleLogin()" id="btn-login" class="w-full bg-blue-600 text-white font-bold py-2 rounded transition hover:bg-blue-700">Masuk</button>
                 <p class="text-center text-sm">Belum punya akses? <a href="#" onclick="showView('view-register')" class="text-blue-600">Daftar</a></p>
             </div>
         </section>
@@ -32,7 +32,7 @@
                 <textarea name="address" placeholder="Alamat" required class="w-full border p-2 rounded"></textarea>
                 <input type="tel" name="whatsapp" placeholder="WhatsApp" required class="w-full border p-2 rounded">
                 <input type="password" name="password" placeholder="Password Baru" required class="w-full border p-2 rounded">
-                <button type="submit" class="w-full bg-green-600 text-white font-bold py-2 rounded">Daftar</button>
+                <button type="submit" class="w-full bg-green-600 text-white font-bold py-2 rounded transition hover:bg-green-700">Daftar</button>
                 <p class="text-center text-sm"><a href="#" onclick="showView('view-login')" class="text-blue-600">Kembali ke Login</a></p>
             </form>
         </section>
@@ -42,8 +42,8 @@
             <div class="flex justify-between items-center bg-white p-4 rounded shadow">
                 <h2 class="text-xl font-bold">Dashboard Postingan</h2>
                 <div>
-                    <button onclick="openPostForm()" class="bg-blue-600 text-white px-4 py-2 rounded mr-2">+ Post Baru</button>
-                    <button onclick="handleLogout()" class="text-red-500">Logout</button>
+                    <button onclick="openPostForm()" class="bg-blue-600 text-white px-4 py-2 rounded mr-2 transition hover:bg-blue-700">+ Post Baru</button>
+                    <button onclick="handleLogout()" class="text-red-500 hover:underline">Logout</button>
                 </div>
             </div>
             <div id="posts-list" class="grid gap-4 md:grid-cols-2"></div>
@@ -53,7 +53,7 @@
         <section id="view-post" class="bg-white p-8 rounded-lg shadow-md hidden max-w-2xl mx-auto">
             <div class="flex justify-between items-center mb-6">
                 <h2 id="post-form-title" class="text-2xl font-semibold">Buat Postingan Baru</h2>
-                <button onclick="showView('view-dashboard')" class="text-gray-500">Batal</button>
+                <button onclick="showView('view-dashboard')" class="text-gray-500 hover:text-gray-700">Batal</button>
             </div>
             <form id="form-post" class="space-y-4" onsubmit="handlePost(event)">
                 <input type="hidden" name="jsonId" id="field-jsonId">
@@ -62,17 +62,20 @@
                     <input type="text" name="price" id="field-price" placeholder="Harga" required class="w-full border p-2 rounded">
                     <input type="text" name="location" id="field-location" placeholder="Lokasi" required class="w-full border p-2 rounded">
                 </div>
-                <textarea name="description" id="field-description" placeholder="Deskripsi Dasar" required class="w-full border p-2 rounded" rows="3"></textarea>
+                <textarea name="description" id="field-description" placeholder="Deskripsi Lengkap Postingan" required class="w-full border p-2 rounded" rows="5"></textarea>
                 <div id="photo-upload-area">
-                    <label class="block text-sm">Foto Barang</label>
-                    <input type="file" id="post-photo" accept="image/*" class="w-full text-sm mt-1">
+                    <label class="block text-sm font-medium text-gray-700">Foto Barang</label>
+                    <input type="file" id="post-photo" accept="image/*" class="w-full text-sm mt-1 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                 </div>
-                <input type="text" name="alt_text" id="field-alt_text" placeholder="Alt Text SEO" required class="w-full border p-2 rounded">
-                <button type="submit" id="btn-submit-post" class="w-full bg-blue-600 text-white font-bold py-3 rounded">Simpan & Posting</button>
+                <input type="text" name="alt_text" id="field-alt_text" placeholder="Alt Text Gambar (SEO)" required class="w-full border p-2 rounded">
+                <button type="submit" id="btn-submit-post" class="w-full bg-blue-600 text-white font-bold py-3 rounded transition hover:bg-blue-700 flex items-center justify-center">
+                    <span id="btn-text">Kirim ke Blogspot</span>
+                    <div id="loader" class="hidden ml-2 animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                </button>
             </form>
         </section>
 
-        <div id="status-msg" class="mt-6 p-4 rounded hidden text-center"></div>
+        <div id="status-msg" class="mt-6 p-4 rounded hidden text-center font-medium"></div>
     </div>
 
     <script>
@@ -88,13 +91,14 @@
         function showStatus(msg, err = false) {
             const el = document.getElementById('status-msg');
             el.innerText = msg;
-            el.className = `mt-6 p-4 rounded text-center ${err ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`;
+            el.className = `mt-6 p-4 rounded text-center font-medium ${err ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`;
             el.classList.remove('hidden');
             setTimeout(() => el.classList.add('hidden'), 5000);
         }
 
         async function handleLogin() {
             const password = document.getElementById('login-password').value;
+            if (!password) return showStatus('Masukkan password!', true);
             const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'login', password }) });
             const result = await res.json();
             if (result.success) {
@@ -111,7 +115,8 @@
             data.action = 'register';
             const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(data) });
             const result = await res.json();
-            if (result.success) { showStatus('Sukses! Silakan login.'); showView('view-login'); }
+            if (result.success) { showStatus('Pendaftaran berhasil! Silakan login.'); showView('view-login'); }
+            else showStatus(result.message, true);
         }
 
         async function loadPosts() {
@@ -122,12 +127,14 @@
             list.innerHTML = result.posts.map(p => {
                 const pJson = JSON.stringify(p).replace(/'/g, "&apos;");
                 return `
-                <div class="bg-white p-4 rounded shadow border-l-4 border-blue-600">
-                    <h3 class="font-bold">${p.title}</h3>
-                    <p class="text-sm text-gray-500">${p.price} - ${p.location}</p>
-                    <div class="mt-2 flex justify-between">
-                        <a href="${p.blogUrl}" target="_blank" class="text-blue-500 text-sm">Lihat Blog</a>
-                        <button onclick='editPost(${pJson})' class="text-green-600 text-sm">Edit</button>
+                <div class="bg-white p-4 rounded shadow border-l-4 border-blue-600 flex justify-between items-start">
+                    <div>
+                        <h3 class="font-bold text-lg">${p.title}</h3>
+                        <p class="text-sm text-gray-500">${p.price} • ${p.location}</p>
+                    </div>
+                    <div class="flex flex-col items-end gap-2">
+                        <a href="${p.blogUrl}" target="_blank" class="text-blue-500 text-xs hover:underline">Buka Blog</a>
+                        <button onclick='editPost(${pJson})' class="bg-green-50 text-green-700 px-3 py-1 rounded text-xs border border-green-200 hover:bg-green-100 transition">Edit</button>
                     </div>
                 </div>
             `}).join('');
@@ -138,6 +145,7 @@
             document.getElementById('post-form-title').innerText = "Buat Postingan Baru";
             document.getElementById('form-post').reset();
             document.getElementById('photo-upload-area').classList.remove('hidden');
+            document.getElementById('btn-text').innerText = 'Kirim ke Blogspot';
             showView('view-post');
         }
 
@@ -148,14 +156,21 @@
             document.getElementById('field-title').value = p.title;
             document.getElementById('field-price').value = p.price;
             document.getElementById('field-location').value = p.location;
-            document.getElementById('field-description').value = p.seoContent.seo_description;
+            document.getElementById('field-description').value = p.description;
             document.getElementById('field-alt_text').value = p.altText || "";
             document.getElementById('photo-upload-area').classList.add('hidden');
+            document.getElementById('btn-text').innerText = 'Update Postingan';
             showView('view-post');
         }
 
         async function handlePost(e) {
             e.preventDefault();
+            const btn = document.getElementById('btn-submit-post');
+            const loader = document.getElementById('loader');
+
+            btn.disabled = true;
+            loader.classList.remove('hidden');
+
             const data = Object.fromEntries(new FormData(e.target));
             data.password = localStorage.getItem('omnipost_pass');
             data.action = isEditMode ? 'updatePost' : 'createPost';
@@ -166,10 +181,17 @@
                 data.jsonId = 'OP-' + Date.now();
             }
 
-            const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(data) });
-            const result = await res.json();
-            if (result.success) { showStatus('Berhasil!'); showView('view-dashboard'); }
-            else showStatus(result.message, true);
+            try {
+                const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(data) });
+                const result = await res.json();
+                if (result.success) { showStatus('Berhasil dikirim!'); showView('view-dashboard'); }
+                else showStatus(result.message, true);
+            } catch (err) {
+                showStatus('Koneksi bermasalah.', true);
+            } finally {
+                btn.disabled = false;
+                loader.classList.add('hidden');
+            }
         }
 
         async function compressImage(file) {
