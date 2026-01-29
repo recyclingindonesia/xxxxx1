@@ -1,10 +1,49 @@
 // CONFIGURATION
-const SPREADSHEET_ID = "YOUR_SPREADSHEET_ID";
+const SPREADSHEET_ID = ""; // Ganti dengan ID Spreadsheet jika script ini tidak menempel di Spreadsheet.
 const BLOG_ID = "YOUR_BLOG_ID";
 const GEMINI_API_KEYS = [
   "API_KEY_1",
   "API_KEY_2"
 ];
+
+/**
+ * Setup Function - Jalankan ini satu kali di awal.
+ */
+function setupSystem() {
+  const ss = getSS();
+
+  // Setup Users Sheet
+  let userSheet = ss.getSheetByName("Users");
+  if (!userSheet) {
+    userSheet = ss.insertSheet("Users");
+    userSheet.appendRow(["Timestamp", "Nama", "Alamat", "WhatsApp", "Password"]);
+    userSheet.getRange(1, 1, 1, 5).setFontWeight("bold").setBackground("#d9ead3");
+  }
+
+  // Setup Posts Sheet
+  let postSheet = ss.getSheetByName("Posts");
+  if (!postSheet) {
+    postSheet = ss.insertSheet("Posts");
+    postSheet.appendRow(["Timestamp", "JSON-ID", "Title", "Price", "Location", "SEO Content", "Blog URL", "Password"]);
+    postSheet.getRange(1, 1, 1, 8).setFontWeight("bold").setBackground("#cfe2f3");
+  }
+
+  Logger.log("Setup Selesai! Nama Sheet: Users & Posts telah dibuat.");
+}
+
+/**
+ * Helper untuk mendapatkan Spreadsheet (Aktif atau via ID)
+ */
+function getSS() {
+  if (SPREADSHEET_ID && SPREADSHEET_ID !== "" && SPREADSHEET_ID !== "YOUR_SPREADSHEET_ID") {
+    return SpreadsheetApp.openById(SPREADSHEET_ID);
+  }
+  try {
+    return SpreadsheetApp.getActiveSpreadsheet();
+  } catch (e) {
+    throw new Error("ID Spreadsheet belum diatur atau script tidak menempel di Spreadsheet.");
+  }
+}
 
 /**
  * Main Web App Entry Point
@@ -27,11 +66,8 @@ function doPost(e) {
 }
 
 function handleRegister(data) {
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const ss = getSS();
   const sheet = ss.getSheetByName("Users") || ss.insertSheet("Users");
-  if (sheet.getLastRow() === 0) {
-    sheet.appendRow(["Timestamp", "Nama", "Alamat", "WhatsApp", "Password"]);
-  }
   sheet.appendRow([new Date(), data.name, data.address, data.whatsapp, data.password]);
   return jsonResponse({ success: true });
 }
@@ -45,14 +81,14 @@ function handleLogin(data) {
 }
 
 function handleGetPosts(data) {
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const ss = getSS();
   const sheet = ss.getSheetByName("Posts");
   if (!sheet) return jsonResponse({ success: true, posts: [] });
 
   const values = sheet.getDataRange().getValues();
   const userPosts = [];
   for (let i = 1; i < values.length; i++) {
-    if (values[i][7] == data.password) { // Match by password
+    if (values[i][7] == data.password) {
       userPosts.push({
         timestamp: values[i][0],
         jsonId: values[i][1],
@@ -76,7 +112,7 @@ function handleCreatePost(data) {
 }
 
 function handleUpdatePost(data) {
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const ss = getSS();
   const sheet = ss.getSheetByName("Posts");
   if (!sheet) return jsonResponse({ success: false, message: "Sheet not found" });
 
@@ -90,13 +126,7 @@ function handleUpdatePost(data) {
   }
 
   if (rowIndex === -1) return jsonResponse({ success: false, message: "Data tidak ditemukan." });
-
-  // Re-generate AI content if requested or use existing
   const aiResult = data.regenAi ? generateSeoContent(data) : JSON.parse(values[rowIndex-1][5]);
-
-  // Update Blogger (Note: Blogger API update would be complex, here we update Spreadsheet record)
-  // In a real scenario, you'd call Blogger.Posts.patch()
-
   sheet.getRange(rowIndex, 3, 1, 4).setValues([[data.title, data.price, data.location, JSON.stringify(aiResult)]]);
   return jsonResponse({ success: true });
 }
@@ -130,14 +160,14 @@ function postToBlogger(data, aiContent) {
 }
 
 function savePostToSpreadsheet(data, aiContent, blogUrl) {
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const ss = getSS();
   const sheet = ss.getSheetByName("Posts") || ss.insertSheet("Posts");
   if (sheet.getLastRow() === 0) sheet.appendRow(["Timestamp", "JSON-ID", "Title", "Price", "Location", "SEO Content", "Blog URL", "Password"]);
   sheet.appendRow([new Date(), data.jsonId, data.title, data.price, data.location, JSON.stringify(aiContent), blogUrl, data.password]);
 }
 
 function findUserByPassword(password) {
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const ss = getSS();
   const sheet = ss.getSheetByName("Users");
   if (!sheet) return null;
   const values = sheet.getDataRange().getValues();
