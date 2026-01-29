@@ -79,6 +79,7 @@
             </div>
             <form id="form-post" class="space-y-6" onsubmit="handlePost(event)">
                 <input type="hidden" name="jsonId" id="field-jsonId">
+                <input type="hidden" name="labels" id="field-labels">
                 <div class="space-y-1">
                     <label class="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Judul Penjualan</label>
                     <input type="text" name="title" id="field-title" placeholder="Contoh: Honda Vario 125 Bekas Mulus" maxlength="150" required class="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 border-gray-200">
@@ -94,7 +95,12 @@
                     </div>
                 </div>
                 <div class="space-y-1">
-                    <label class="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Keterangan / Deskripsi</label>
+                    <div class="flex justify-between items-end px-1">
+                        <label class="text-xs font-bold text-gray-500 uppercase tracking-widest">Keterangan / Deskripsi</label>
+                        <button type="button" onclick="generateAI()" id="btn-ai" class="text-[10px] bg-purple-100 text-purple-700 px-3 py-1 rounded-lg font-black hover:bg-purple-200 transition flex items-center gap-1">
+                            ✨ GUNAKAN AI SEO
+                        </button>
+                    </div>
                     <textarea name="description" id="field-description" placeholder="Jelaskan kondisi barang secara lengkap..." required class="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 border-gray-200" rows="4"></textarea>
                 </div>
                 <div class="grid grid-cols-2 gap-6">
@@ -248,6 +254,41 @@
             showView('view-post');
         }
 
+        async function generateAI() {
+            const title = document.getElementById('field-title').value;
+            const price = document.getElementById('field-price').value;
+            const location = document.getElementById('field-location').value;
+            const password = localStorage.getItem('omnipost_pass');
+
+            if (!title || !price || !location) return showStatus('Isi Judul, Harga, dan Lokasi dulu!', true);
+
+            const btn = document.getElementById('btn-ai');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '✨ SEDANG BERPIKIR...';
+
+            try {
+                const res = await fetch(GAS_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'generateAI', title, price, location, password })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    document.getElementById('field-description').value = result.description;
+                    document.getElementById('field-alt_text').value = result.alt_text;
+                    document.getElementById('field-labels').value = JSON.stringify(result.labels);
+                    showStatus('AI Berhasil Membuat SEO!');
+                } else {
+                    showStatus(result.message, true);
+                }
+            } catch (e) {
+                showStatus('Gagal terhubung ke AI.', true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+
         async function handlePost(e) {
             e.preventDefault();
             const btn = document.getElementById('btn-submit-post');
@@ -257,6 +298,7 @@
 
             const data = Object.fromEntries(new FormData(e.target));
             data.password = localStorage.getItem('omnipost_pass');
+            if (data.labels) data.labels = JSON.parse(data.labels);
             data.action = isEditMode ? 'updatePost' : 'createPost';
 
             if (!isEditMode) {

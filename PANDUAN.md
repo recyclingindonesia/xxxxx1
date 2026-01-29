@@ -7,8 +7,9 @@ Selamat! Anda telah memiliki sistem **Blogger Sales Management Dashboard** yang 
 2. Buka **Extensions** > **Apps Script**.
 3. Salin kode dari `code.gs` ke editor Apps Script.
 4. Klik ikon **Project Settings (Roda Gigi)** di sebelah kiri.
-5. Gulir ke bawah ke **Script Properties** dan tambahkan:
+5. Gulir ke bawah ke **Script Properties** dan tambahkan properti berikut:
    - `BLOG_ID`: ID Blog Blogger Anda.
+   - `GEMINI_API_KEYS`: Masukkan satu atau lebih API Key Gemini (Flash 1.5), pisahkan dengan koma jika lebih dari satu. Contoh: `key1, key2, key3`. Sistem akan otomatis melakukan rotasi jika limit tercapai.
 6. Kembali ke Editor, pilih fungsi **setupSystem** dari menu dropdown dan klik **Run**.
    - Sistem akan otomatis menyiapkan kolom Spreadsheet yang diperlukan (**Users** & **Posts**) dengan skema profesional terbaru.
 
@@ -38,6 +39,7 @@ Sistem ini dirancang untuk memudahkan manajemen jualan Anda:
 - **Visual Dashboard**: Menampilkan foto produk langsung di halaman utama.
 - **Status Barang**: Anda bisa menandai barang sebagai **Aktif** atau **Terjual**. Status ini akan muncul sebagai label otomatis di postingan Blogger.
 - **Full CRUD**: Buat, Lihat, Edit, dan Hapus postingan langsung dari satu dashboard.
+- **AI SEO Generator**: Klik tombol ✨ **GUNAKAN AI SEO** untuk membuat deskripsi profesional, label SEO, dan Alt Text secara otomatis berdasarkan data produk Anda.
 - **Keamanan**: Data setiap pengunjung dipisahkan berdasarkan password akses yang didaftarkan.
 
 ## Tambahan: Menghubungkan ke Google Cloud Project (Opsional)

@@ -23,11 +23,11 @@ function setupSystem(blogId) {
     userSheet.getRange(1, 1, 1, 5).setFontWeight("bold").setBackground("#d9ead3");
   }
 
-  // Setup Posts (Added Status column)
+  // Setup Posts (Added Status & Labels column)
   let postSheet = ss.getSheetByName("Posts") || ss.insertSheet("Posts");
   if (postSheet.getLastRow() === 0) {
-    postSheet.appendRow(["Timestamp", "JSON-ID", "Post-ID", "Title", "Price", "Location", "Description", "Blog URL", "Password", "Alt Text", "Photo-Data", "Status"]);
-    postSheet.getRange(1, 1, 1, 12).setFontWeight("bold").setBackground("#cfe2f3");
+    postSheet.appendRow(["Timestamp", "JSON-ID", "Post-ID", "Title", "Price", "Location", "Description", "Blog URL", "Password", "Alt Text", "Photo-Data", "Status", "Labels"]);
+    postSheet.getRange(1, 1, 1, 13).setFontWeight("bold").setBackground("#cfe2f3");
   }
   Logger.log("Setup Selesai!");
 }
@@ -53,9 +53,101 @@ function doPost(e) {
     if (action === 'createPost') return handleCreatePost(data);
     if (action === 'updatePost') return handleUpdatePost(data);
     if (action === 'deletePost') return handleDeletePost(data);
+    if (action === 'generateAI') return handleGenerateAI(data);
 
     return jsonResponse({ success: false, message: "Invalid action" });
   } catch (err) { return jsonResponse({ success: false, message: err.toString() }); }
+}
+
+/**
+ * AI Gemini Integration with Key Rotation
+ */
+function getGeminiKey() {
+  const props = PropertiesService.getScriptProperties();
+  const keysStr = props.getProperty("GEMINI_API_KEYS") || "";
+  const keys = keysStr.split(",").map(k => k.trim()).filter(k => k !== "");
+  if (keys.length === 0) return null;
+
+  let currentIndex = parseInt(props.getProperty("CURRENT_KEY_INDEX") || "0");
+  if (currentIndex >= keys.length) currentIndex = 0;
+
+  return { key: keys[currentIndex], index: currentIndex, total: keys.length };
+}
+
+function rotateGeminiKey() {
+  const props = PropertiesService.getScriptProperties();
+  const keysStr = props.getProperty("GEMINI_API_KEYS") || "";
+  const keys = keysStr.split(",").map(k => k.trim()).filter(k => k !== "");
+  if (keys.length <= 1) return;
+
+  let nextIndex = parseInt(props.getProperty("CURRENT_KEY_INDEX") || "0") + 1;
+  if (nextIndex >= keys.length) nextIndex = 0;
+  props.setProperty("CURRENT_KEY_INDEX", nextIndex.toString());
+}
+
+function callGemini(prompt) {
+  let attempts = 0;
+  const maxAttempts = 3;
+
+  while (attempts < maxAttempts) {
+    const keyData = getGeminiKey();
+    if (!keyData) throw new Error("API Key Gemini belum diatur di Script Properties (GEMINI_API_KEYS).");
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${keyData.key}`;
+    const payload = {
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { temperature: 0.7, maxOutputTokens: 800 }
+    };
+
+    const options = {
+      method: "post",
+      contentType: "application/json",
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    };
+
+    const response = UrlFetchApp.fetch(url, options);
+    const code = response.getResponseCode();
+    const resText = response.getContentText();
+
+    if (code === 200) {
+      const json = JSON.parse(resText);
+      return json.candidates[0].content.parts[0].text;
+    } else if (code === 429) {
+      Logger.log(`Key index ${keyData.index} limit reached (429). Rotating...`);
+      rotateGeminiKey();
+      attempts++;
+    } else {
+      throw new Error(`Gemini API Error (${code}): ${resText}`);
+    }
+  }
+  throw new Error("Semua API Key Gemini telah mencapai limit. Silakan coba lagi nanti.");
+}
+
+function handleGenerateAI(data) {
+  const prompt = `Buatkan deskripsi jualan produk yang menarik dan SEO friendly untuk Blogger.
+  Data Produk:
+  - Judul: ${data.title}
+  - Harga: ${data.price}
+  - Lokasi: ${data.location}
+
+  Format jawaban harus JSON valid dengan key:
+  - description: (Gunakan HTML sederhana seperti <p>, <b>, <ul> untuk list fitur)
+  - labels: (Berupa array string label SEO, contoh ["Elektronik", "Bekas Murah"])
+  - alt_text: (Deskripsi gambar singkat untuk SEO)
+
+  Pastikan deskripsi persuasif tapi tetap profesional.`;
+
+  try {
+    const aiResponse = callGemini(prompt);
+    // Extract JSON from response if Gemini wraps it in markdown
+    const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error("AI tidak memberikan format JSON yang valid.");
+    const result = JSON.parse(jsonMatch[0]);
+    return jsonResponse({ success: true, ...result });
+  } catch (e) {
+    return jsonResponse({ success: false, message: "AI Error: " + e.message });
+  }
 }
 
 function handleRegister(data) {
@@ -83,7 +175,8 @@ function handleGetPosts(data) {
         timestamp: values[i][0], jsonId: values[i][1], postId: values[i][2],
         title: values[i][3], price: values[i][4], location: values[i][5],
         description: values[i][6], blogUrl: values[i][7],
-        altText: values[i][9], photoData: values[i][10], status: values[i][11] || "Aktif"
+        altText: values[i][9], photoData: values[i][10], status: values[i][11] || "Aktif",
+        labels: values[i][12] ? JSON.parse(values[i][12]) : []
       });
     }
   }
@@ -122,13 +215,14 @@ function handleUpdatePost(data) {
       const content = constructBloggerContent(data);
       Blogger.Posts.patch({
         title: `[${status}] ${data.title}`.substring(0, 150),
-        content: content
+        content: content,
+        labels: data.labels || []
       }, secrets.blogId, existingPostId);
     } catch (e) { Logger.log("Blogger update failed: " + e.message); }
   }
 
   sheet.getRange(rowIndex, 4, 1, 4).setValues([[data.title, data.price, data.location, data.description]]);
-  sheet.getRange(rowIndex, 10, 1, 3).setValues([[data.alt_text, data.photoData, data.status]]);
+  sheet.getRange(rowIndex, 10, 1, 4).setValues([[data.alt_text, data.photoData, data.status, JSON.stringify(data.labels || [])]]);
   return jsonResponse({ success: true });
 }
 
@@ -175,15 +269,16 @@ function postToBlogger(data) {
   const content = constructBloggerContent(data);
   return Blogger.Posts.insert({
     title: `[${status}] ${data.title}`.substring(0, 150),
-    content: content
+    content: content,
+    labels: data.labels || []
   }, secrets.blogId);
 }
 
 function savePostToSpreadsheet(data, bloggerRes) {
   const ss = getSS();
   const sheet = ss.getSheetByName("Posts") || ss.insertSheet("Posts");
-  if (sheet.getLastRow() === 0) sheet.appendRow(["Timestamp", "JSON-ID", "Post-ID", "Title", "Price", "Location", "Description", "Blog URL", "Password", "Alt Text", "Photo-Data", "Status"]);
-  sheet.appendRow([new Date(), data.jsonId, bloggerRes.id, data.title, data.price, data.location, data.description, bloggerRes.url, data.password, data.alt_text, data.photoData, data.status]);
+  if (sheet.getLastRow() === 0) sheet.appendRow(["Timestamp", "JSON-ID", "Post-ID", "Title", "Price", "Location", "Description", "Blog URL", "Password", "Alt Text", "Photo-Data", "Status", "Labels"]);
+  sheet.appendRow([new Date(), data.jsonId, bloggerRes.id, data.title, data.price, data.location, data.description, bloggerRes.url, data.password, data.alt_text, data.photoData, data.status, JSON.stringify(data.labels || [])]);
 }
 
 function findUserByPassword(password) {
