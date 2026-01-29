@@ -40,6 +40,12 @@ Sistem ini dirancang untuk memudahkan manajemen jualan Anda:
 - **Full CRUD**: Buat, Lihat, Edit, dan Hapus postingan langsung dari satu dashboard.
 - **Keamanan**: Data setiap pengunjung dipisahkan berdasarkan password akses yang didaftarkan.
 
+## Tambahan: Menghubungkan ke Google Cloud Project (Opsional)
+Jika Anda ingin menghubungkan script ini ke Project Google Cloud Anda (misalnya untuk monitoring atau limit API yang lebih tinggi):
+1. Buka Apps Script > **Project Settings**.
+2. Klik **Change Project**.
+3. Masukkan **Project Number** Anda: `827330939462`.
+
 ---
 **Tips Penggunaan:**
 - Gunakan **Alt Text** yang deskriptif untuk meningkatkan SEO gambar di Google Image.
