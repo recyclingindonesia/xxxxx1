@@ -17,6 +17,7 @@
             <div id="user-info" class="hidden flex items-center gap-4 bg-white p-2 rounded-full shadow-sm border border-gray-100 pr-4">
                 <div class="w-10 h-10 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center font-bold" id="user-initial">U</div>
                 <span id="user-name" class="font-semibold text-sm">User</span>
+                <button onclick="showView('view-settings')" class="text-gray-400 hover:text-blue-600 transition">⚙️</button>
                 <button onclick="handleLogout()" class="text-red-500 text-xs font-bold hover:underline ml-2 uppercase tracking-wider">Logout</button>
             </div>
         </header>
@@ -45,6 +46,21 @@
                 <button type="submit" class="w-full bg-green-600 text-white font-bold py-3 rounded-xl shadow-lg shadow-green-100 hover:bg-green-700 transition">Selesaikan Pendaftaran</button>
                 <p class="text-center text-sm"><a href="#" onclick="showView('view-login')" class="text-blue-600 font-bold hover:underline">Kembali ke Login</a></p>
             </form>
+        </section>
+
+        <!-- Settings -->
+        <section id="view-settings" class="bg-white p-10 rounded-2xl shadow-xl max-w-md mx-auto hidden border border-gray-100">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">Pengaturan AI</h2>
+            <p class="text-gray-500 text-sm mb-6">Kelola API Key Gemini Anda di sini. Data disimpan lokal di browser Anda.</p>
+            <div class="space-y-4">
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-gray-500 uppercase">Gemini API Keys</label>
+                    <textarea id="settings-gemini-keys" placeholder="key1, key2, key3" class="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 border-gray-200" rows="3"></textarea>
+                    <p class="text-[10px] text-gray-400 italic">Pisahkan dengan koma jika lebih dari satu untuk rotasi otomatis.</p>
+                </div>
+                <button onclick="saveSettings()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl shadow-lg hover:bg-blue-700 transition">Simpan Pengaturan</button>
+                <button onclick="showView('view-dashboard')" class="w-full text-gray-500 font-bold py-2 hover:underline">Kembali</button>
+            </div>
         </section>
 
         <!-- Dashboard -->
@@ -254,11 +270,63 @@
             showView('view-post');
         }
 
+        function saveSettings() {
+            const keys = document.getElementById('settings-gemini-keys').value;
+            localStorage.setItem('omnipost_gemini_keys', keys);
+            showStatus('Pengaturan Tersimpan!');
+            showView('view-dashboard');
+        }
+
+        async function callGemini(prompt) {
+            const keysStr = localStorage.getItem('omnipost_gemini_keys') || "";
+            const keys = keysStr.split(",").map(k => k.trim()).filter(k => k !== "");
+
+            if (keys.length === 0) throw new Error("API Key Gemini belum diatur di menu Pengaturan ⚙️");
+
+            let currentIndex = parseInt(localStorage.getItem('omnipost_key_index') || "0");
+            if (currentIndex >= keys.length) currentIndex = 0;
+
+            const maxAttempts = keys.length;
+            let attempts = 0;
+
+            while (attempts < maxAttempts) {
+                const key = keys[currentIndex];
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: prompt }] }],
+                            generationConfig: { temperature: 0.7, maxOutputTokens: 800 }
+                        })
+                    });
+
+                    if (response.ok) {
+                        const json = await response.json();
+                        localStorage.setItem('omnipost_key_index', currentIndex);
+                        return json.candidates[0].content.parts[0].text;
+                    } else if (response.status === 429) {
+                        currentIndex = (currentIndex + 1) % keys.length;
+                        attempts++;
+                    } else {
+                        const err = await response.text();
+                        throw new Error(`Gemini Error (${response.status}): ${err}`);
+                    }
+                } catch (e) {
+                    if (attempts >= maxAttempts - 1) throw e;
+                    currentIndex = (currentIndex + 1) % keys.length;
+                    attempts++;
+                }
+            }
+            throw new Error("Semua API Key Gemini mencapai limit atau bermasalah.");
+        }
+
         async function generateAI() {
             const title = document.getElementById('field-title').value;
             const price = document.getElementById('field-price').value;
             const location = document.getElementById('field-location').value;
-            const password = localStorage.getItem('omnipost_pass');
 
             if (!title || !price || !location) return showStatus('Isi Judul, Harga, dan Lokasi dulu!', true);
 
@@ -267,22 +335,31 @@
             btn.disabled = true;
             btn.innerHTML = '✨ SEDANG BERPIKIR...';
 
+            const prompt = `Buatkan deskripsi jualan produk yang menarik dan SEO friendly untuk Blogger.
+            Data Produk:
+            - Judul: ${title}
+            - Harga: ${price}
+            - Lokasi: ${location}
+
+            Format jawaban harus JSON valid dengan key:
+            - description: (Gunakan HTML sederhana seperti <p>, <b>, <ul> untuk list fitur)
+            - labels: (Berupa array string label SEO, contoh ["Elektronik", "Bekas Murah"])
+            - alt_text: (Deskripsi gambar singkat untuk SEO)
+
+            Pastikan deskripsi persuasif tapi tetap profesional.`;
+
             try {
-                const res = await fetch(GAS_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'generateAI', title, price, location, password })
-                });
-                const result = await res.json();
-                if (result.success) {
-                    document.getElementById('field-description').value = result.description;
-                    document.getElementById('field-alt_text').value = result.alt_text;
-                    document.getElementById('field-labels').value = JSON.stringify(result.labels);
-                    showStatus('AI Berhasil Membuat SEO!');
-                } else {
-                    showStatus(result.message, true);
-                }
+                const aiResponse = await callGemini(prompt);
+                const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+                if (!jsonMatch) throw new Error("AI tidak memberikan format JSON yang valid.");
+                const result = JSON.parse(jsonMatch[0]);
+
+                document.getElementById('field-description').value = result.description;
+                document.getElementById('field-alt_text').value = result.alt_text;
+                document.getElementById('field-labels').value = JSON.stringify(result.labels);
+                showStatus('AI Berhasil Membuat SEO!');
             } catch (e) {
-                showStatus('Gagal terhubung ke AI.', true);
+                showStatus(e.message, true);
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = originalText;
@@ -345,6 +422,7 @@
             if (pass) {
                 document.getElementById('user-name').innerText = localStorage.getItem('omnipost_user') || 'User';
                 document.getElementById('user-initial').innerText = (localStorage.getItem('omnipost_user') || 'U').charAt(0);
+                document.getElementById('settings-gemini-keys').value = localStorage.getItem('omnipost_gemini_keys') || "";
                 showView('view-dashboard');
             }
         };

@@ -9,7 +9,6 @@ Selamat! Anda telah memiliki sistem **Blogger Sales Management Dashboard** yang 
 4. Klik ikon **Project Settings (Roda Gigi)** di sebelah kiri.
 5. Gulir ke bawah ke **Script Properties** dan tambahkan properti berikut:
    - `BLOG_ID`: ID Blog Blogger Anda.
-   - `GEMINI_API_KEYS`: Masukkan satu atau lebih API Key Gemini (Flash 1.5), pisahkan dengan koma jika lebih dari satu. Contoh: `key1, key2, key3`. Sistem akan otomatis melakukan rotasi jika limit tercapai.
 6. Kembali ke Editor, pilih fungsi **setupSystem** dari menu dropdown dan klik **Run**.
    - Sistem akan otomatis menyiapkan kolom Spreadsheet yang diperlukan (**Users** & **Posts**) dengan skema profesional terbaru.
 
@@ -39,8 +38,8 @@ Sistem ini dirancang untuk memudahkan manajemen jualan Anda:
 - **Visual Dashboard**: Menampilkan foto produk langsung di halaman utama.
 - **Status Barang**: Anda bisa menandai barang sebagai **Aktif** atau **Terjual**. Status ini akan muncul sebagai label otomatis di postingan Blogger.
 - **Full CRUD**: Buat, Lihat, Edit, dan Hapus postingan langsung dari satu dashboard.
-- **AI SEO Generator**: Klik tombol ✨ **GUNAKAN AI SEO** untuk membuat deskripsi profesional, label SEO, dan Alt Text secara otomatis berdasarkan data produk Anda.
-- **Keamanan**: Data setiap pengunjung dipisahkan berdasarkan password akses yang didaftarkan.
+- **AI SEO Generator (Client-Side)**: Klik tombol ✨ **GUNAKAN AI SEO** untuk membuat deskripsi profesional, label SEO, dan Alt Text. Anda bisa mengatur API Key Gemini langsung melalui menu Pengaturan (ikon roda gigi ⚙️) di dashboard.
+- **Keamanan**: Data setiap pengunjung dipisahkan berdasarkan password akses yang didaftarkan. API Key Gemini disimpan secara lokal di browser Anda.
 
 ## Tambahan: Menghubungkan ke Google Cloud Project (Opsional)
 Jika Anda ingin menghubungkan script ini ke Project Google Cloud Anda (misalnya untuk monitoring atau limit API yang lebih tinggi):
