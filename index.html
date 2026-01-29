@@ -119,16 +119,18 @@
             const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getPosts', password }) });
             const result = await res.json();
             const list = document.getElementById('posts-list');
-            list.innerHTML = result.posts.map(p => `
+            list.innerHTML = result.posts.map(p => {
+                const pJson = JSON.stringify(p).replace(/'/g, "&apos;");
+                return `
                 <div class="bg-white p-4 rounded shadow border-l-4 border-blue-600">
                     <h3 class="font-bold">${p.title}</h3>
                     <p class="text-sm text-gray-500">${p.price} - ${p.location}</p>
                     <div class="mt-2 flex justify-between">
                         <a href="${p.blogUrl}" target="_blank" class="text-blue-500 text-sm">Lihat Blog</a>
-                        <button onclick='editPost(${JSON.stringify(p).replace(/'/g, "&apos;")})' class="text-green-600 text-sm">Edit</button>
+                        <button onclick='editPost(${pJson})' class="text-green-600 text-sm">Edit</button>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         function openPostForm() {
@@ -146,9 +148,9 @@
             document.getElementById('field-title').value = p.title;
             document.getElementById('field-price').value = p.price;
             document.getElementById('field-location').value = p.location;
-            document.getElementById('field-description').value = "Edit deskripsi jika perlu...";
-            document.getElementById('field-alt_text').value = "Update Alt Text";
-            document.getElementById('photo-upload-area').classList.add('hidden'); // Simplified edit
+            document.getElementById('field-description').value = p.seoContent.seo_description;
+            document.getElementById('field-alt_text').value = p.altText || "";
+            document.getElementById('photo-upload-area').classList.add('hidden');
             showView('view-post');
         }
 
