@@ -118,9 +118,10 @@ function handleUpdatePost(data) {
   const secrets = getSecrets();
   if (existingPostId && secrets.blogId) {
     try {
+      const status = data.status || "Aktif";
       const content = constructBloggerContent(data);
       Blogger.Posts.patch({
-        title: `[${data.status}] ${data.title}`.substring(0, 150),
+        title: `[${status}] ${data.title}`.substring(0, 150),
         content: content
       }, secrets.blogId, existingPostId);
     } catch (e) { Logger.log("Blogger update failed: " + e.message); }
@@ -161,17 +162,19 @@ function handleDeletePost(data) {
 }
 
 function constructBloggerContent(data) {
-  const badgeColor = data.status === "Terjual" ? "#ef4444" : "#22c55e";
-  const statusBadge = `<div style="display:inline-block; padding:2px 8px; background:${badgeColor}; color:white; border-radius:4px; font-weight:bold; margin-bottom:10px;">${data.status}</div>`;
+  const status = data.status || "Aktif";
+  const badgeColor = status === "Terjual" ? "#ef4444" : "#22c55e";
+  const statusBadge = `<div style="display:inline-block; padding:2px 8px; background:${badgeColor}; color:white; border-radius:4px; font-weight:bold; margin-bottom:10px;">${status}</div>`;
   const imgHtml = data.photoData ? `<div style="text-align: center;"><img alt="${data.alt_text}" src="${data.photoData}" style="max-width: 100%; border-radius:8px;" /></div><br />` : "";
   return `${statusBadge}${imgHtml}<p>${data.description}</p><ul><li>Harga: <strong>${data.price}</strong></li><li>Lokasi: ${data.location}</li><li>ID: <code>${data.jsonId}</code></li></ul>`;
 }
 
 function postToBlogger(data) {
   const secrets = getSecrets();
+  const status = data.status || "Aktif";
   const content = constructBloggerContent(data);
   return Blogger.Posts.insert({
-    title: `[${data.status}] ${data.title}`.substring(0, 150),
+    title: `[${status}] ${data.title}`.substring(0, 150),
     content: content
   }, secrets.blogId);
 }
