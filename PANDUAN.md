@@ -1,6 +1,6 @@
-# Panduan Pengaturan OmniPost Pro (Direct Posting)
+# Panduan Pengaturan OmniPost Pro (Professional CRUD Edition)
 
-Selamat! Anda telah memiliki sistem **Blogger Sales Post Manager**. Ikuti langkah-langkah di bawah ini untuk mengaktifkan aplikasi Anda.
+Selamat! Anda telah memiliki sistem **Blogger Sales Management Dashboard** yang profesional. Ikuti langkah-langkah di bawah ini untuk mengaktifkan aplikasi Anda.
 
 ## 1. Persiapan Google Spreadsheet & Otomatisasi
 1. Buat Google Spreadsheet baru.
@@ -10,7 +10,7 @@ Selamat! Anda telah memiliki sistem **Blogger Sales Post Manager**. Ikuti langka
 5. Gulir ke bawah ke **Script Properties** dan tambahkan:
    - `BLOG_ID`: ID Blog Blogger Anda.
 6. Kembali ke Editor, pilih fungsi **setupSystem** dari menu dropdown dan klik **Run**.
-   - Sistem akan otomatis menyiapkan kolom Spreadsheet yang diperlukan (**Users** & **Posts**).
+   - Sistem akan otomatis menyiapkan kolom Spreadsheet yang diperlukan (**Users** & **Posts**) dengan skema profesional terbaru.
 
 ## 2. Mendapatkan Blogger Blog ID
 1. Buka dashboard Blogger Anda.
@@ -24,27 +24,23 @@ Selamat! Anda telah memiliki sistem **Blogger Sales Post Manager**. Ikuti langka
 ## 4. Deployment sebagai Web App
 1. Klik tombol **Deploy** > **New Deployment**.
 2. Pilih tipe: **Web App**.
-3. Deskripsi: "OmniPost Pro Direct".
-4. Execute as: **Me (Saya)**.
-5. Who has access: **Anyone (Siapa saja)**.
-6. Klik **Deploy**, lalu salin **Web App URL**.
+3. Execute as: **Me (Saya)**.
+4. Who has access: **Anyone (Siapa saja)**.
+5. Klik **Deploy**, lalu salin **Web App URL**.
 
 ## 5. Menghubungkan Frontend ke Backend
 1. Buka file `index.html`.
 2. Cari variabel `const GAS_URL = "YOUR_APPS_SCRIPT_URL";`.
 3. Ganti dengan URL yang Anda salin di langkah sebelumnya.
-4. Simpan file `index.html`.
 
-## 6. Cara Menggunakan
-1. Buka `index.html` di browser.
-2. Lakukan **Pendaftaran** (Hanya sekali) untuk membuat password akses.
-3. Gunakan password tersebut untuk **Login**.
-4. Di **Dashboard**, Anda bisa melihat daftar postingan Anda dan mengeditnya sewaktu-waktu.
-5. Gunakan tombol **+ Post Baru** untuk membuat postingan langsung ke Blogger.
+## 6. Fitur Dashboard Profesional
+Sistem ini dirancang untuk memudahkan manajemen jualan Anda:
+- **Visual Dashboard**: Menampilkan foto produk langsung di halaman utama.
+- **Status Barang**: Anda bisa menandai barang sebagai **Aktif** atau **Terjual**. Status ini akan muncul sebagai label otomatis di postingan Blogger.
+- **Full CRUD**: Buat, Lihat, Edit, dan Hapus postingan langsung dari satu dashboard.
+- **Keamanan**: Data setiap pengunjung dipisahkan berdasarkan password akses yang didaftarkan.
 
 ---
-**Fitur Utama:**
-- **Langsung & Cepat:** Tidak menggunakan AI agar proses posting lebih stabil dan instan.
-- **Kompresi Gambar:** Gambar diperkecil secara otomatis sebelum dikirim (hemat kuota).
-- **Manajemen Data:** Lihat dan Edit postingan Anda langsung dari dashboard.
-- **Keamanan:** Blog ID disimpan aman di Script Properties.
+**Tips Penggunaan:**
+- Gunakan **Alt Text** yang deskriptif untuk meningkatkan SEO gambar di Google Image.
+- Saat mengedit, sistem akan menggunakan kembali foto lama jika Anda tidak mengunggah foto baru (hemat waktu!).

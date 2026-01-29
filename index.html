@@ -3,79 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OmniPost Pro - Blogger Direct Manager</title>
+    <title>OmniPost Pro - Sales Management Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style> .hidden { display: none; } </style>
 </head>
-<body class="bg-gray-100 min-h-screen font-sans">
-    <div class="container mx-auto px-4 py-8 max-w-4xl">
-        <header class="text-center mb-10">
-            <h1 class="text-4xl font-bold text-blue-600 mb-2">OmniPost Pro</h1>
-            <p class="text-gray-600">Blogger Sales Post Manager (Direct Edition)</p>
+<body class="bg-gray-50 min-h-screen font-sans text-gray-900">
+    <div class="container mx-auto px-4 py-8 max-w-5xl">
+        <header class="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
+            <div class="text-center md:text-left">
+                <h1 class="text-4xl font-extrabold text-blue-700 tracking-tight">OmniPost Pro</h1>
+                <p class="text-gray-500 font-medium italic">Professional Sales Post Manager</p>
+            </div>
+            <div id="user-info" class="hidden flex items-center gap-4 bg-white p-2 rounded-full shadow-sm border border-gray-100 pr-4">
+                <div class="w-10 h-10 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center font-bold" id="user-initial">U</div>
+                <span id="user-name" class="font-semibold text-sm">User</span>
+                <button onclick="handleLogout()" class="text-red-500 text-xs font-bold hover:underline ml-2 uppercase tracking-wider">Logout</button>
+            </div>
         </header>
 
-        <!-- Login View -->
-        <section id="view-login" class="bg-white p-8 rounded-lg shadow-md max-w-md mx-auto">
-            <h2 class="text-2xl font-semibold mb-6 text-center">Masuk ke Sistem</h2>
-            <div class="space-y-4">
-                <input type="password" id="login-password" class="w-full rounded-md border-gray-300 shadow-sm border p-2" placeholder="Password Akses">
-                <button onclick="handleLogin()" id="btn-login" class="w-full bg-blue-600 text-white font-bold py-2 rounded transition hover:bg-blue-700">Masuk</button>
-                <p class="text-center text-sm">Belum punya akses? <a href="#" onclick="showView('view-register')" class="text-blue-600">Daftar</a></p>
+        <!-- Login -->
+        <section id="view-login" class="bg-white p-10 rounded-2xl shadow-xl max-w-md mx-auto border border-gray-100">
+            <div class="text-center mb-8">
+                <h2 class="text-2xl font-bold">Selamat Datang</h2>
+                <p class="text-gray-400 text-sm">Masukkan password akses Anda untuk mengelola postingan.</p>
+            </div>
+            <div class="space-y-5">
+                <input type="password" id="login-password" class="w-full rounded-xl border-gray-200 shadow-sm border p-3 focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="Password Akses">
+                <button onclick="handleLogin()" id="btn-login" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all transform hover:-translate-y-0.5">Masuk Sekarang</button>
+                <p class="text-center text-sm text-gray-500">Belum punya akses? <a href="#" onclick="showView('view-register')" class="text-blue-600 font-bold hover:underline">Daftar Legalitas</a></p>
             </div>
         </section>
 
-        <!-- Register View -->
-        <section id="view-register" class="bg-white p-8 rounded-lg shadow-md max-w-md mx-auto hidden">
-            <h2 class="text-2xl font-semibold mb-6 text-center">Pendaftaran Legalitas</h2>
+        <!-- Register -->
+        <section id="view-register" class="bg-white p-10 rounded-2xl shadow-xl max-w-md mx-auto hidden border border-gray-100">
+            <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Pendaftaran Legalitas</h2>
             <form class="space-y-4" onsubmit="handleRegister(event)">
-                <input type="text" name="name" placeholder="Nama Lengkap" required class="w-full border p-2 rounded">
-                <textarea name="address" placeholder="Alamat" required class="w-full border p-2 rounded"></textarea>
-                <input type="tel" name="whatsapp" placeholder="WhatsApp" required class="w-full border p-2 rounded">
-                <input type="password" name="password" placeholder="Password Baru" required class="w-full border p-2 rounded">
-                <button type="submit" class="w-full bg-green-600 text-white font-bold py-2 rounded transition hover:bg-green-700">Daftar</button>
-                <p class="text-center text-sm"><a href="#" onclick="showView('view-login')" class="text-blue-600">Kembali ke Login</a></p>
+                <input type="text" name="name" placeholder="Nama Lengkap / Instansi" required class="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-green-500 border-gray-200">
+                <textarea name="address" placeholder="Alamat Lengkap Sesuai Identitas" required class="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-green-500 border-gray-200" rows="2"></textarea>
+                <input type="tel" name="whatsapp" placeholder="Nomor WhatsApp Aktif" required class="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-green-500 border-gray-200">
+                <input type="password" name="password" placeholder="Buat Password Akses Baru" required class="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-green-500 border-gray-200">
+                <button type="submit" class="w-full bg-green-600 text-white font-bold py-3 rounded-xl shadow-lg shadow-green-100 hover:bg-green-700 transition">Selesaikan Pendaftaran</button>
+                <p class="text-center text-sm"><a href="#" onclick="showView('view-login')" class="text-blue-600 font-bold hover:underline">Kembali ke Login</a></p>
             </form>
         </section>
 
-        <!-- Dashboard View -->
-        <section id="view-dashboard" class="hidden space-y-6">
-            <div class="flex justify-between items-center bg-white p-4 rounded shadow">
-                <h2 class="text-xl font-bold">Dashboard Postingan</h2>
+        <!-- Dashboard -->
+        <section id="view-dashboard" class="hidden space-y-8">
+            <div class="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                 <div>
-                    <button onclick="openPostForm()" class="bg-blue-600 text-white px-4 py-2 rounded mr-2 transition hover:bg-blue-700">+ Post Baru</button>
-                    <button onclick="handleLogout()" class="text-red-500 hover:underline">Logout</button>
+                    <h2 class="text-2xl font-black text-gray-800">Dashboard Anda</h2>
+                    <p class="text-gray-400 text-sm">Kelola semua barang dagangan Anda di sini.</p>
                 </div>
+                <button onclick="openPostForm()" class="bg-blue-600 text-white font-bold px-6 py-3 rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all flex items-center gap-2">
+                    <span class="text-xl">+</span> Post Baru
+                </button>
             </div>
-            <div id="posts-list" class="grid gap-4 md:grid-cols-2"></div>
+
+            <div id="posts-list" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <!-- Posts will appear here -->
+            </div>
+
+            <div id="empty-dashboard" class="hidden text-center py-20 bg-gray-100 rounded-3xl border-2 border-dashed border-gray-300">
+                <p class="text-gray-400 font-medium">Belum ada postingan. Mulai jualan sekarang!</p>
+            </div>
         </section>
 
-        <!-- Post Form View -->
-        <section id="view-post" class="bg-white p-8 rounded-lg shadow-md hidden max-w-2xl mx-auto">
-            <div class="flex justify-between items-center mb-6">
-                <h2 id="post-form-title" class="text-2xl font-semibold">Buat Postingan Baru</h2>
-                <button onclick="showView('view-dashboard')" class="text-gray-500 hover:text-gray-700">Batal</button>
+        <!-- Post Form -->
+        <section id="view-post" class="bg-white p-10 rounded-2xl shadow-xl hidden max-w-2xl mx-auto border border-gray-100">
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h2 id="post-form-title" class="text-2xl font-bold text-gray-800">Buat Postingan</h2>
+                    <p class="text-gray-400 text-sm">Informasi barang Anda akan otomatis sinkron ke Blogger.</p>
+                </div>
+                <button onclick="showView('view-dashboard')" class="bg-gray-100 text-gray-500 p-2 rounded-full hover:bg-gray-200 transition">✕</button>
             </div>
-            <form id="form-post" class="space-y-4" onsubmit="handlePost(event)">
+            <form id="form-post" class="space-y-6" onsubmit="handlePost(event)">
                 <input type="hidden" name="jsonId" id="field-jsonId">
-                <input type="text" name="title" id="field-title" placeholder="Judul (Max 150)" maxlength="150" required class="w-full border p-2 rounded">
-                <div class="grid grid-cols-2 gap-4">
-                    <input type="text" name="price" id="field-price" placeholder="Harga" required class="w-full border p-2 rounded">
-                    <input type="text" name="location" id="field-location" placeholder="Lokasi" required class="w-full border p-2 rounded">
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Judul Penjualan</label>
+                    <input type="text" name="title" id="field-title" placeholder="Contoh: Honda Vario 125 Bekas Mulus" maxlength="150" required class="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 border-gray-200">
                 </div>
-                <textarea name="description" id="field-description" placeholder="Deskripsi Lengkap Postingan" required class="w-full border p-2 rounded" rows="5"></textarea>
-                <div id="photo-upload-area">
-                    <label class="block text-sm font-medium text-gray-700">Foto Barang</label>
-                    <input type="file" id="post-photo" accept="image/*" class="w-full text-sm mt-1 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Harga (IDR)</label>
+                        <input type="text" name="price" id="field-price" placeholder="Rp 15.000.000" required class="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 border-gray-200">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Lokasi</label>
+                        <input type="text" name="location" id="field-location" placeholder="Kota/Kabupaten" required class="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 border-gray-200">
+                    </div>
                 </div>
-                <input type="text" name="alt_text" id="field-alt_text" placeholder="Alt Text Gambar (SEO)" required class="w-full border p-2 rounded">
-                <button type="submit" id="btn-submit-post" class="w-full bg-blue-600 text-white font-bold py-3 rounded transition hover:bg-blue-700 flex items-center justify-center">
-                    <span id="btn-text">Kirim ke Blogspot</span>
-                    <div id="loader" class="hidden ml-2 animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Keterangan / Deskripsi</label>
+                    <textarea name="description" id="field-description" placeholder="Jelaskan kondisi barang secara lengkap..." required class="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 border-gray-200" rows="4"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-6">
+                    <div id="photo-upload-area" class="space-y-1">
+                        <label class="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Unggah Foto</label>
+                        <input type="file" id="post-photo" accept="image/*" class="w-full text-sm mt-1 file:bg-blue-50 file:text-blue-700 file:border-0 file:py-2 file:px-4 file:rounded-lg hover:file:bg-blue-100 cursor-pointer">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Status Barang</label>
+                        <select name="status" id="field-status" class="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 border-gray-200 bg-white">
+                            <option value="Aktif">Aktif</option>
+                            <option value="Terjual">Terjual</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Alt Text (SEO)</label>
+                    <input type="text" name="alt_text" id="field-alt_text" placeholder="Deskripsi singkat isi gambar" required class="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 border-gray-200">
+                </div>
+                <button type="submit" id="btn-submit-post" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl shadow-xl shadow-blue-100 hover:bg-blue-700 transition flex items-center justify-center gap-3">
+                    <span id="btn-text">Sinkronkan ke Blogger</span>
+                    <div id="loader" class="hidden animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
                 </button>
             </form>
         </section>
 
-        <div id="status-msg" class="mt-6 p-4 rounded hidden text-center font-medium"></div>
+        <!-- Status Message -->
+        <div id="status-msg" class="fixed bottom-10 right-10 left-10 md:left-auto md:w-80 p-4 rounded-2xl hidden shadow-2xl text-center font-bold z-50 animate-bounce"></div>
     </div>
 
     <script>
@@ -85,15 +132,20 @@
         function showView(id) {
             document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
             document.getElementById(id).classList.remove('hidden');
-            if (id === 'view-dashboard') loadPosts();
+            if (id === 'view-dashboard') {
+                document.getElementById('user-info').classList.remove('hidden');
+                loadPosts();
+            } else if (id === 'view-login' || id === 'view-register') {
+                document.getElementById('user-info').classList.add('hidden');
+            }
         }
 
         function showStatus(msg, err = false) {
             const el = document.getElementById('status-msg');
             el.innerText = msg;
-            el.className = `mt-6 p-4 rounded text-center font-medium ${err ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`;
+            el.className = `fixed bottom-10 right-10 left-10 md:left-auto md:w-80 p-4 rounded-2xl shadow-2xl text-center font-bold z-50 ${err ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}`;
             el.classList.remove('hidden');
-            setTimeout(() => el.classList.add('hidden'), 5000);
+            setTimeout(() => el.classList.add('hidden'), 4000);
         }
 
         async function handleLogin() {
@@ -103,11 +155,17 @@
             const result = await res.json();
             if (result.success) {
                 localStorage.setItem('omnipost_pass', password);
+                localStorage.setItem('omnipost_user', result.name);
+                document.getElementById('user-name').innerText = result.name;
+                document.getElementById('user-initial').innerText = result.name.charAt(0);
                 showView('view-dashboard');
             } else showStatus(result.message, true);
         }
 
-        function handleLogout() { localStorage.removeItem('omnipost_pass'); showView('view-login'); }
+        function handleLogout() {
+            localStorage.clear();
+            showView('view-login');
+        }
 
         async function handleRegister(e) {
             e.preventDefault();
@@ -115,7 +173,7 @@
             data.action = 'register';
             const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(data) });
             const result = await res.json();
-            if (result.success) { showStatus('Pendaftaran berhasil! Silakan login.'); showView('view-login'); }
+            if (result.success) { showStatus('Pendaftaran Sukses!'); showView('view-login'); }
             else showStatus(result.message, true);
         }
 
@@ -124,20 +182,46 @@
             const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getPosts', password }) });
             const result = await res.json();
             const list = document.getElementById('posts-list');
+            const empty = document.getElementById('empty-dashboard');
+
+            if (result.posts.length === 0) {
+                list.innerHTML = "";
+                empty.classList.remove('hidden');
+                return;
+            }
+
+            empty.classList.add('hidden');
             list.innerHTML = result.posts.map(p => {
                 const pJson = JSON.stringify(p).replace(/'/g, "&apos;");
+                const statusColor = p.status === 'Terjual' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600';
+                const thumb = p.photoData || 'https://via.placeholder.com/300x200?text=No+Image';
+
                 return `
-                <div class="bg-white p-4 rounded shadow border-l-4 border-blue-600 flex justify-between items-start">
-                    <div>
-                        <h3 class="font-bold text-lg">${p.title}</h3>
-                        <p class="text-sm text-gray-500">${p.price} • ${p.location}</p>
+                <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden group hover:shadow-xl transition-all duration-300">
+                    <div class="h-48 overflow-hidden relative">
+                        <img src="${thumb}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                        <span class="absolute top-4 left-4 ${statusColor} text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-sm">${p.status}</span>
                     </div>
-                    <div class="flex flex-col items-end gap-2">
-                        <a href="${p.blogUrl}" target="_blank" class="text-blue-500 text-xs hover:underline">Buka Blog</a>
-                        <button onclick='editPost(${pJson})' class="bg-green-50 text-green-700 px-3 py-1 rounded text-xs border border-green-200 hover:bg-green-100 transition">Edit</button>
+                    <div class="p-6">
+                        <h3 class="font-bold text-lg mb-1 truncate">${p.title}</h3>
+                        <p class="text-blue-600 font-black text-sm mb-4">${p.price}</p>
+                        <div class="flex items-center gap-3 border-t pt-4">
+                            <a href="${p.blogUrl}" target="_blank" class="flex-1 bg-gray-50 text-gray-700 text-center py-2 rounded-xl text-xs font-bold hover:bg-gray-100 transition">Lihat Blog</a>
+                            <button onclick='editPost(${pJson})' class="flex-1 bg-blue-50 text-blue-700 py-2 rounded-xl text-xs font-bold hover:bg-blue-100 transition">Edit</button>
+                            <button onclick="handleDelete('${p.jsonId}')" class="p-2 text-red-400 hover:text-red-600 transition">🗑</button>
+                        </div>
                     </div>
                 </div>
             `}).join('');
+        }
+
+        async function handleDelete(jsonId) {
+            if (!confirm('Hapus postingan ini secara permanen?')) return;
+            const password = localStorage.getItem('omnipost_pass');
+            const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'deletePost', password, jsonId }) });
+            const result = await res.json();
+            if (result.success) { showStatus('Terhapus!'); loadPosts(); }
+            else showStatus('Gagal menghapus.', true);
         }
 
         function openPostForm() {
@@ -145,7 +229,7 @@
             document.getElementById('post-form-title').innerText = "Buat Postingan Baru";
             document.getElementById('form-post').reset();
             document.getElementById('photo-upload-area').classList.remove('hidden');
-            document.getElementById('btn-text').innerText = 'Kirim ke Blogspot';
+            document.getElementById('btn-text').innerText = 'Sinkronkan ke Blogger';
             showView('view-post');
         }
 
@@ -158,8 +242,9 @@
             document.getElementById('field-location').value = p.location;
             document.getElementById('field-description').value = p.description;
             document.getElementById('field-alt_text').value = p.altText || "";
-            document.getElementById('photo-upload-area').classList.add('hidden');
-            document.getElementById('btn-text').innerText = 'Update Postingan';
+            document.getElementById('field-status').value = p.status || "Aktif";
+            document.getElementById('photo-upload-area').classList.add('hidden'); // Simplified: reuse old photo
+            document.getElementById('btn-text').innerText = 'Simpan Perubahan';
             showView('view-post');
         }
 
@@ -167,7 +252,6 @@
             e.preventDefault();
             const btn = document.getElementById('btn-submit-post');
             const loader = document.getElementById('loader');
-
             btn.disabled = true;
             loader.classList.remove('hidden');
 
@@ -184,10 +268,10 @@
             try {
                 const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(data) });
                 const result = await res.json();
-                if (result.success) { showStatus('Berhasil dikirim!'); showView('view-dashboard'); }
+                if (result.success) { showStatus('Sinkronisasi Berhasil!'); showView('view-dashboard'); }
                 else showStatus(result.message, true);
             } catch (err) {
-                showStatus('Koneksi bermasalah.', true);
+                showStatus('Koneksi Error.', true);
             } finally {
                 btn.disabled = false;
                 loader.classList.add('hidden');
@@ -201,12 +285,12 @@
                     const img = new Image();
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
-                        const max = 1200;
+                        const max = 1000;
                         let w = img.width, h = img.height;
                         if (w > h) { if (w > max) { h *= max/w; w = max; } } else { if (h > max) { w *= max/h; h = max; } }
                         canvas.width = w; canvas.height = h;
                         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                        res(canvas.toDataURL('image/jpeg', 0.7));
+                        res(canvas.toDataURL('image/jpeg', 0.6));
                     };
                     img.src = e.target.result;
                 };
@@ -214,7 +298,14 @@
             });
         }
 
-        window.onload = () => { if (localStorage.getItem('omnipost_pass')) showView('view-dashboard'); };
+        window.onload = () => {
+            const pass = localStorage.getItem('omnipost_pass');
+            if (pass) {
+                document.getElementById('user-name').innerText = localStorage.getItem('omnipost_user') || 'User';
+                document.getElementById('user-initial').innerText = (localStorage.getItem('omnipost_user') || 'U').charAt(0);
+                showView('view-dashboard');
+            }
+        };
     </script>
 </body>
 </html>
