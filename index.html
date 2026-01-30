@@ -12,7 +12,13 @@
         <header class="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
             <div class="text-center md:text-left">
                 <h1 class="text-4xl font-extrabold text-blue-700 tracking-tight">OmniPost Pro</h1>
-                <p class="text-gray-500 font-medium italic">Professional Sales Post Manager</p>
+                <div class="flex items-center gap-2">
+                    <p class="text-gray-500 font-medium italic text-sm">Professional Sales Post Manager</p>
+                    <div id="status-sync" class="hidden bg-green-50 text-green-700 px-2 py-0.5 rounded-md text-[10px] font-bold border border-green-100 flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                        <span id="blog-domain-text">Connected</span>
+                    </div>
+                </div>
             </div>
             <div id="user-info" class="hidden flex items-center gap-4 bg-white p-2 rounded-full shadow-sm border border-gray-100 pr-4">
                 <div class="w-10 h-10 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center font-bold" id="user-initial">U</div>
@@ -53,6 +59,10 @@
             <h2 class="text-2xl font-bold mb-4 text-gray-800">Pengaturan AI</h2>
             <p class="text-gray-500 text-sm mb-6">Kelola API Key Gemini Anda di sini. Data disimpan lokal di browser Anda.</p>
             <div class="space-y-4">
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-gray-500 uppercase tracking-widest block ml-1">Domain Blogspot</label>
+                        <input type="text" id="settings-blog-domain" placeholder="example.blogspot.com" class="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 border-gray-200">
+                    </div>
                 <div class="space-y-1">
                     <label class="text-xs font-bold text-gray-500 uppercase">Gemini API Keys</label>
                     <textarea id="settings-gemini-keys" placeholder="key1, key2, key3" class="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 border-gray-200" rows="3"></textarea>
@@ -150,6 +160,7 @@
     <script>
         const GAS_URL = "YOUR_APPS_SCRIPT_URL";
         let isEditMode = false;
+        let blogFeed = { labels: [] };
 
         function showView(id) {
             document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
@@ -272,28 +283,45 @@
 
         function saveSettings() {
             const keys = document.getElementById('settings-gemini-keys').value;
+            const domain = document.getElementById('settings-blog-domain').value;
             localStorage.setItem('omnipost_gemini_keys', keys);
+            localStorage.setItem('omnipost_blog_domain', domain);
             showStatus('Pengaturan Tersimpan!');
+            syncFeed();
             showView('view-dashboard');
+        }
+
+        async function syncFeed() {
+            const domain = localStorage.getItem('omnipost_blog_domain');
+            if (!domain) return;
+
+            const cleanDomain = domain.trim().replace(/^https?:\/\//, '').split('/')[0];
+            const cb = 'blog_cb_' + Date.now();
+            const s = document.createElement('script');
+            s.src = `https://${cleanDomain}/feeds/posts/summary?alt=json-in-script&max-results=50&callback=${cb}`;
+
+            window[cb] = (data) => {
+                const entries = data.feed.entry || [];
+                const labels = new Set();
+                entries.forEach(e => e.category && e.category.forEach(c => labels.add(c.term)));
+                blogFeed.labels = Array.from(labels).sort();
+
+                document.getElementById('status-sync').classList.remove('hidden');
+                document.getElementById('blog-domain-text').innerText = cleanDomain;
+
+                delete window[cb]; s.remove();
+            };
+            document.body.appendChild(s);
         }
 
         async function callGemini(prompt) {
             const keysStr = localStorage.getItem('omnipost_gemini_keys') || "";
             const keys = keysStr.split(",").map(k => k.trim()).filter(k => k !== "");
-
             if (keys.length === 0) throw new Error("API Key Gemini belum diatur di menu Pengaturan ⚙️");
 
-            let currentIndex = parseInt(localStorage.getItem('omnipost_key_index') || "0");
-            if (currentIndex >= keys.length) currentIndex = 0;
-
-            const maxAttempts = keys.length;
-            let attempts = 0;
-
-            while (attempts < maxAttempts) {
-                const key = keys[currentIndex];
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
-
+            for (let key of keys) {
                 try {
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`;
                     const response = await fetch(url, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -305,22 +333,14 @@
 
                     if (response.ok) {
                         const json = await response.json();
-                        localStorage.setItem('omnipost_key_index', currentIndex);
                         return json.candidates[0].content.parts[0].text;
-                    } else if (response.status === 429) {
-                        currentIndex = (currentIndex + 1) % keys.length;
-                        attempts++;
-                    } else {
-                        const err = await response.text();
-                        throw new Error(`Gemini Error (${response.status}): ${err}`);
                     }
+                    console.warn(`Key failed with status ${response.status}. Trying next key...`);
                 } catch (e) {
-                    if (attempts >= maxAttempts - 1) throw e;
-                    currentIndex = (currentIndex + 1) % keys.length;
-                    attempts++;
+                    console.error("Fetch error for key, trying next...", e);
                 }
             }
-            throw new Error("Semua API Key Gemini mencapai limit atau bermasalah.");
+            throw new Error("Gagal merespons. Pastikan API Key valid dan memiliki kuota.");
         }
 
         async function generateAI() {
@@ -335,15 +355,19 @@
             btn.disabled = true;
             btn.innerHTML = '✨ SEDANG BERPIKIR...';
 
+            const detectedLabels = blogFeed.labels.join(', ');
             const prompt = `Buatkan deskripsi jualan produk yang menarik dan SEO friendly untuk Blogger.
             Data Produk:
             - Judul: ${title}
             - Harga: ${price}
             - Lokasi: ${location}
 
+            Konteks Blog:
+            - Daftar Label Aktif: [${detectedLabels}]
+
             Format jawaban harus JSON valid dengan key:
             - description: (Gunakan HTML sederhana seperti <p>, <b>, <ul> untuk list fitur)
-            - labels: (Berupa array string label SEO, contoh ["Elektronik", "Bekas Murah"])
+            - labels: (Pilih label yang sudah ada jika cocok, atau buat baru jika perlu. Berupa array string)
             - alt_text: (Deskripsi gambar singkat untuk SEO)
 
             Pastikan deskripsi persuasif tapi tetap profesional.`;
@@ -424,6 +448,8 @@
                 document.getElementById('user-name').innerText = localStorage.getItem('omnipost_user') || 'User';
                 document.getElementById('user-initial').innerText = (localStorage.getItem('omnipost_user') || 'U').charAt(0);
                 document.getElementById('settings-gemini-keys').value = localStorage.getItem('omnipost_gemini_keys') || "";
+                document.getElementById('settings-blog-domain').value = localStorage.getItem('omnipost_blog_domain') || "";
+                syncFeed();
                 showView('view-dashboard');
             }
         };
