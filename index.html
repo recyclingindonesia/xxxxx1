@@ -265,7 +265,7 @@
             document.getElementById('field-description').value = p.description;
             document.getElementById('field-alt_text').value = p.altText || "";
             document.getElementById('field-status').value = p.status || "Aktif";
-            document.getElementById('photo-upload-area').classList.add('hidden'); // Simplified: reuse old photo
+            document.getElementById('photo-upload-area').classList.remove('hidden');
             document.getElementById('btn-text').innerText = 'Simpan Perubahan';
             showView('view-post');
         }
@@ -291,7 +291,7 @@
 
             while (attempts < maxAttempts) {
                 const key = keys[currentIndex];
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
 
                 try {
                     const response = await fetch(url, {
@@ -378,9 +378,10 @@
             if (data.labels) data.labels = JSON.parse(data.labels);
             data.action = isEditMode ? 'updatePost' : 'createPost';
 
+            const file = document.getElementById('post-photo').files[0];
+            if (file) data.photoData = await compressImage(file);
+
             if (!isEditMode) {
-                const file = document.getElementById('post-photo').files[0];
-                if (file) data.photoData = await compressImage(file);
                 data.jsonId = 'OP-' + Date.now();
             }
 
@@ -404,12 +405,12 @@
                     const img = new Image();
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
-                        const max = 1000;
+                        const max = 400; // Reduced to fit in Google Sheets (50k chars)
                         let w = img.width, h = img.height;
                         if (w > h) { if (w > max) { h *= max/w; w = max; } } else { if (h > max) { w *= max/h; h = max; } }
                         canvas.width = w; canvas.height = h;
                         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                        res(canvas.toDataURL('image/jpeg', 0.6));
+                        res(canvas.toDataURL('image/jpeg', 0.5)); // More aggressive compression
                     };
                     img.src = e.target.result;
                 };
