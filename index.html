@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0f172a">
+    <title>OMNI v20.6 (Auto-Pilot)</title>
+
+    <!-- Libraries -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+        :root { --primary: #3b82f6; --accent: #10b981; --dark-bg: #0f172a; --panel-bg: #1e293b; --border: #334155; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--dark-bg); color: #cbd5e1; margin: 0; overflow: hidden; -webkit-tap-highlight-color: transparent; }
+        h1, h2, h3 { font-family: 'Outfit', sans-serif; }
+
+        .app-shell { height: 100vh; display: flex; flex-direction: column; }
+        .workspace { flex: 1; overflow-y: auto; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; padding-bottom: 80px; }
+
+        /* Glassmorphism Sidebar */
+        #sidebar { position: fixed; inset-y: 0; left: 0; width: 280px; background: rgba(30, 41, 59, 0.95); backdrop-filter: blur(10px); border-right: 1px solid var(--border); z-index: 50; transform: translateX(-100%); transition: transform 0.3s ease; }
+        #sidebar.open { transform: translateX(0); }
+        @media (min-width: 1024px) { #sidebar { transform: translateX(0); } .app-shell { padding-left: 280px; } }
+
+        /* Cards */
+        .glass-card { background: rgba(30, 41, 59, 0.6); border: 1px solid var(--border); backdrop-filter: blur(8px); border-radius: 16px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .input-dark { background: #0f172a; border: 1px solid var(--border); color: white; padding: 10px; border-radius: 8px; width: 100%; font-size: 13px; outline: none; transition: 0.2s; }
+        .input-dark:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); }
+
+        /* Editor */
+        .prose-editor { color: #e2e8f0; line-height: 1.8; font-size: 15px; max-width: 800px; margin: 0 auto; padding: 20px; background: white; color: #1e293b; border-radius: 8px; min-height: 600px; }
+        .prose-editor h1 { font-size: 2em; border-bottom: 2px solid var(--primary); padding-bottom: 10px; margin-top: 20px; }
+        .prose-editor h2 { font-size: 1.5em; color: #334155; margin-top: 15px; }
+        .prose-editor ul { padding-left: 20px; list-style-type: disc; }
+        .prose-editor a { color: #2563eb; text-decoration: underline; font-weight: bold; }
+        .prose-editor table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.9em; }
+        .prose-editor th, .prose-editor td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        .prose-editor th { background-color: #f2f2f2; font-weight: bold; color: #333; }
+        .prose-editor blockquote { border-left: 4px solid var(--primary); padding-left: 1rem; margin-left: 0; font-style: italic; color: #64748b; background: #f8fafc; padding: 10px; border-radius: 0 8px 8px 0; }
+
+        /* Utilities */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .nav-active { background: rgba(59, 130, 246, 0.1); color: var(--primary); border-left: 3px solid var(--primary); }
+
+        /* Terminal */
+        .terminal-log { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+        .log-info { color: #60a5fa; }
+        .log-success { color: #34d399; }
+        .log-error { color: #f87171; }
+        .log-warn { color: #fbbf24; }
+    </style>
+</head>
+<body>
+
+<div id="toast-area" class="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none"></div>
+
+<!-- SIDEBAR -->
+<aside id="sidebar" class="flex flex-col">
+    <div class="p-6 border-b border-gray-700 flex items-center gap-3">
+        <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold"><i class="fas fa-cube"></i></div>
+        <div>
+            <h1 class="text-lg font-black tracking-tight text-white">OMNI <span class="text-blue-500">v20.6</span></h1>
+            <p class="text-[10px] text-gray-500 font-mono">AUTO-PILOT MODE</p>
+        </div>
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-4 space-y-1">
+        <div class="text-[10px] font-bold text-gray-500 uppercase px-2 mb-2">Core Modules</div>
+        <button onclick="nav('architect')" id="btn-architect" class="w-full text-left p-3 rounded-lg text-sm text-gray-400 hover:bg-gray-800 transition-all flex items-center gap-3 nav-active">
+            <i class="fas fa-brain w-5 text-center"></i> Architect
+        </button>
+        <button onclick="nav('pixel')" id="btn-pixel" class="w-full text-left p-3 rounded-lg text-sm text-gray-400 hover:bg-gray-800 transition-all flex items-center gap-3">
+            <i class="fas fa-palette w-5 text-center"></i> Pixel Forge
+        </button>
+        <button onclick="nav('warroom')" id="btn-warroom" class="w-full text-left p-3 rounded-lg text-sm text-gray-400 hover:bg-gray-800 transition-all flex items-center gap-3">
+            <i class="fas fa-rocket w-5 text-center"></i> War Room
+        </button>
+        <button onclick="nav('atom')" id="btn-atom" class="w-full text-left p-3 rounded-lg text-sm text-gray-400 hover:bg-gray-800 transition-all flex items-center gap-3">
+            <i class="fas fa-network-wired w-5 text-center"></i> Atom Bunker
+        </button>
+    </div>
+
+    <div class="p-4 border-t border-gray-700 bg-black/20">
+        <button onclick="openConfig()" class="w-full py-3 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-xl text-xs font-bold uppercase border border-gray-600 flex items-center justify-center gap-2">
+            <i class="fas fa-cog"></i> Konfigurasi
+        </button>
+        <div class="mt-3 flex justify-between items-center px-2">
+            <span class="text-[10px] text-gray-500">API Status</span>
+            <div class="flex items-center gap-2">
+                <div id="status-dot" class="w-2 h-2 rounded-full bg-red-500"></div>
+                <span id="status-text" class="text-[10px] font-bold text-red-500">OFFLINE</span>
+            </div>
+        </div>
+    </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<div class="app-shell">
+    <!-- Mobile Header -->
+    <header class="lg:hidden h-16 bg-[#1e293b] border-b border-gray-700 flex items-center justify-between px-4 sticky top-0 z-40">
+        <div class="flex items-center gap-3">
+            <button onclick="toggleSidebar()" class="text-gray-400"><i class="fas fa-bars text-xl"></i></button>
+            <span class="font-black text-white">OMNI v20.6</span>
+        </div>
+        <button onclick="openConfig()" class="text-gray-400"><i class="fas fa-cog"></i></button>
+    </header>
+
+    <main class="workspace p-4 lg:p-8">
+
+        <!-- VIEW: ARCHITECT (Riset & Penulisan) -->
+        <div id="view-architect" class="fade-in max-w-5xl mx-auto">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-white">Architect Intelligence</h2>
+                    <p class="text-xs text-gray-400">Riset Pasar & Penulisan Konten Berbasis SEO.</p>
+                </div>
+                <div class="flex gap-2">
+                    <input type="text" id="topic-in" class="input-dark w-64" placeholder="Topik Utama (Keyword)">
+                    <button onclick="runArchitect()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold uppercase shadow-lg shadow-blue-900/50">
+                        <i class="fas fa-bolt mr-2"></i> Analisa
+                    </button>
+                </div>
+            </div>
+
+            <!-- SEO DASHBOARD V1 -->
+            <div id="seo-dashboard" class="hidden mb-6 bg-[#161b22] border border-[#30363d] rounded-xl p-5 shadow-2xl">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-gray-800 p-2 rounded-lg text-blue-400"><i class="fas fa-search-dollar"></i></div>
+                        <div>
+                            <h3 class="text-sm font-bold text-gray-200">SEO ANALYZER</h3>
+                            <p class="text-[10px] text-gray-500">On-Page Optimization Check</p>
+                        </div>
+                    </div>
+                    <div id="seo-score-badge" class="px-4 py-2 rounded-lg text-xl font-black bg-gray-800 text-white border border-gray-700">0/100</div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="w-full bg-gray-700 rounded-full h-3 mb-4 overflow-hidden">
+                    <div id="seo-progress-bar" class="bg-gradient-to-r from-blue-500 to-emerald-500 h-full rounded-full transition-all duration-1000 ease-out" style="width: 0%"></div>
+                </div>
+
+                <!-- Report Cards -->
+                <div class="grid md:grid-cols-2 gap-4">
+                    <!-- Statistics -->
+                    <div class="grid grid-cols-2 gap-2 text-center">
+                        <div class="bg-gray-800/50 p-2 rounded border border-gray-700">
+                            <span class="text-[10px] text-gray-400 block uppercase">Word Count</span>
+                            <span id="stat-words" class="text-lg font-bold text-white">0</span>
+                        </div>
+                        <div class="bg-gray-800/50 p-2 rounded border border-gray-700">
+                            <span class="text-[10px] text-gray-400 block uppercase">Density</span>
+                            <span id="stat-density" class="text-lg font-bold text-blue-400">0%</span>
+                        </div>
+                    </div>
+
+                    <!-- Detail Reports -->
+                    <div id="seo-reports" class="space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar text-[11px]">
+                        <div class="text-gray-500 italic text-center py-4">Menunggu analisa konten...</div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-gray-700 flex justify-end">
+                    <button onclick="copyContent()" class="text-xs font-bold text-blue-400 hover:text-white flex items-center gap-2">
+                        <i class="fas fa-copy"></i> Copy Optimized Article
+                    </button>
+                </div>
+            </div>
+
+            <div class="paper-sheet prose-editor shadow-2xl" id="canvas" contenteditable="true">
+                <div class="flex flex-col items-center justify-center h-full text-gray-400 pt-20">
+                    <i class="fas fa-pencil-alt text-4xl mb-4 opacity-20"></i>
+                    <p>Area kerja kosong. Masukkan topik di atas untuk memulai.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: PIXEL FORGE (Visual) -->
+        <div id="view-pixel" class="hidden fade-in max-w-5xl mx-auto">
+            <h2 class="text-2xl font-bold text-white mb-6">Pixel Forge v2</h2>
+            <div class="grid lg:grid-cols-3 gap-6">
+                <!-- Controls -->
+                <div class="glass-card space-y-4 h-fit">
+                    <h3 class="text-sm font-bold text-white uppercase border-b border-gray-700 pb-2">Canvas Control</h3>
+
+                    <div>
+                        <label class="text-[10px] text-gray-400 block mb-1">Judul Utama</label>
+                        <textarea id="px-title" class="input-dark h-16" placeholder="Judul Besar..."></textarea>
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-gray-400 block mb-1">Sub-Judul / Footer</label>
+                        <input type="text" id="px-sub" class="input-dark" placeholder="Created by OMNI">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-[10px] text-gray-400 block mb-1">Warna 1 (Top)</label>
+                            <input type="color" id="px-c1" class="w-full h-8 rounded bg-transparent cursor-pointer" value="#1e293b">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-400 block mb-1">Warna 2 (Bot)</label>
+                            <input type="color" id="px-c2" class="w-full h-8 rounded bg-transparent cursor-pointer" value="#0f172a">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-[10px] text-gray-400 block mb-1">Overlay Pattern</label>
+                        <select id="px-pattern" class="input-dark">
+                            <option value="none">Polos</option>
+                            <option value="grid">Grid Tech</option>
+                            <option value="dots">Polkadot</option>
+                            <option value="lines">Scanlines</option>
+                        </select>
+                    </div>
+
+                    <button onclick="renderPixel()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold uppercase shadow-lg">
+                        <i class="fas fa-paint-brush mr-2"></i> Render Canvas
+                    </button>
+                </div>
+
+                <!-- Preview -->
+                <div class="lg:col-span-2 flex flex-col items-center">
+                    <div class="relative bg-gray-800 p-2 rounded-xl shadow-2xl border border-gray-700">
+                        <canvas id="mainCanvas" width="800" height="450" class="max-w-full h-auto rounded-lg"></canvas>
+                    </div>
+                    <div class="flex gap-4 mt-4 w-full max-w-md">
+                        <button onclick="downloadPixel()" class="flex-1 py-2 bg-gray-700 text-white rounded-lg text-xs font-bold uppercase hover:bg-gray-600"><i class="fas fa-download mr-1"></i> Download PNG</button>
+                        <button onclick="usePixelForAtom()" class="flex-1 py-2 bg-blue-600/30 text-blue-400 border border-blue-500/30 rounded-lg text-xs font-bold uppercase hover:bg-blue-600/40"><i class="fas fa-share mr-1"></i> Kirim ke Atom</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: WAR ROOM (Data Multiplier) -->
+        <div id="view-warroom" class="hidden fade-in max-w-5xl mx-auto">
+            <h2 class="text-2xl font-bold text-white mb-6">War Room</h2>
+            <div class="grid lg:grid-cols-2 gap-6">
+                <div class="glass-card">
+                    <h3 class="text-sm font-bold text-emerald-400 uppercase mb-4">Content Multiplier</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-[10px] text-gray-400 block mb-1">Variabel A (Produk/Jasa)</label>
+                            <textarea id="wr-a" class="input-dark h-20" placeholder="Jasa Desain, Jasa SEO..."></textarea>
+                        </div>
+                        <div>
+                            <div class="flex justify-between">
+                                <label class="text-[10px] text-gray-400 block mb-1">Variabel B (Target Lokasi/Niche)</label>
+                                <button onclick="autoGeo()" class="text-[9px] text-blue-400 hover:underline">Auto Geo</button>
+                            </div>
+                            <textarea id="wr-b" class="input-dark h-20" placeholder="Jakarta, Surabaya..."></textarea>
+                        </div>
+                        <button onclick="generateQueue()" class="w-full py-3 bg-white text-gray-900 font-black rounded-lg text-xs uppercase shadow-lg hover:bg-gray-200">
+                            <i class="fas fa-bolt mr-1"></i> Generate Queue
+                        </button>
+                    </div>
+                </div>
+
+                <div class="glass-card flex flex-col h-full max-h-[400px]">
+                    <div class="flex justify-between items-center mb-2 border-b border-gray-700 pb-2">
+                        <h3 class="text-sm font-bold text-white uppercase">Queue Result</h3>
+                        <span id="queue-count" class="text-[10px] bg-blue-600 px-2 py-0.5 rounded text-white">0 Items</span>
+                    </div>
+                    <div id="queue-list" class="flex-1 overflow-y-auto space-y-2 pr-2 no-scrollbar">
+                        <div class="text-center text-gray-500 text-xs mt-10">Antrian kosong.</div>
+                    </div>
+                    <button onclick="sendToAtom()" id="btn-send-atom" class="mt-4 w-full py-2 bg-gray-700 text-gray-400 rounded-lg text-xs font-bold uppercase cursor-not-allowed" disabled>
+                        Kirim ke Bunker
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: ATOM BUNKER (Automation) -->
+        <div id="view-atom" class="hidden fade-in max-w-5xl mx-auto">
+            <h2 class="text-2xl font-bold text-white mb-6">Atom Bunker <span class="text-emerald-500 text-xs ml-2 animate-pulse">(Parallel Engine Active)</span></h2>
+
+            <div class="grid lg:grid-cols-3 gap-6">
+                <!-- Status Panel -->
+                <div class="glass-card col-span-1 space-y-4">
+                    <h3 class="text-sm font-bold text-white uppercase border-b border-gray-700 pb-2">Control Center</h3>
+
+                    <div class="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
+                        <span class="text-xs text-gray-400">Status Mesin</span>
+                        <span id="atom-status" class="text-xs font-bold text-yellow-500">IDLE</span>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-[10px] text-gray-400">Jeda Aman per Worker (Detik)</label>
+                        <input type="number" id="atom-delay" class="input-dark" value="3">
+                        <p class="text-[9px] text-gray-500">Nilai aman: 3-5 detik untuk menghindari spam detect.</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="startAtom()" id="btn-start" class="py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold uppercase disabled:opacity-50 disabled:cursor-not-allowed">
+                            START PARALLEL
+                        </button>
+                        <button onclick="stopAtom()" id="btn-stop" class="py-3 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-bold uppercase disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            PAUSE
+                        </button>
+                    </div>
+
+                    <button onclick="exportReport()" class="w-full py-2 bg-gray-700 text-gray-300 rounded-lg text-[10px] font-bold uppercase border border-gray-600">
+                        <i class="fas fa-file-csv mr-1"></i> Export Report
+                    </button>
+
+                    <!-- ERROR CONTROLS (Smart Re-Queue) -->
+                    <div id="atom-failure-controls" class="hidden flex gap-2 mt-4 pt-2 border-t border-gray-700 animate-pulse">
+                        <button onclick="downloadFailureLog()" class="flex-1 bg-red-900/40 border border-red-500 text-red-400 py-2 rounded-lg text-[10px] font-bold uppercase hover:bg-red-800 transition-all">
+                            <i class="fas fa-file-download mr-2"></i> Log Error
+                        </button>
+                        <button onclick="requeueFailed()" class="flex-[2] bg-orange-600/40 border border-orange-500 text-orange-400 py-2 rounded-lg text-[10px] font-bold uppercase hover:bg-orange-600 hover:text-white transition-all">
+                            <i class="fas fa-sync-alt mr-2"></i> Re-Queue Failed
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Terminal -->
+                <div class="glass-card lg:col-span-2 flex flex-col h-[500px]">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-xs font-mono text-emerald-400">>_ TERMINAL_OUTPUT</h3>
+                        <div id="progress-container" class="w-32 h-2 bg-gray-700 rounded-full overflow-hidden hidden">
+                            <div id="progress-bar" class="h-full bg-emerald-500 w-0 transition-all duration-300"></div>
+                        </div>
+                    </div>
+                    <div id="terminal" class="flex-1 bg-black/50 rounded-lg p-4 overflow-y-auto terminal-log space-y-1 border border-gray-800">
+                        <div class="text-gray-500">> System Ready...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- CONFIG MODAL -->
+<div id="modal-config" class="fixed inset-0 bg-black/90 backdrop-blur-md z-[60] hidden flex items-center justify-center p-4">
+    <div class="glass-card w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+        <h3 class="text-xl font-bold text-white mb-4 uppercase">System Configuration</h3>
+
+        <div class="space-y-4">
+            <div>
+                <label class="text-xs text-gray-400 block mb-1">Gemini API Keys (Multi-Line Rotation)</label>
+                <textarea id="cfg-keys" class="input-dark h-24 font-mono" placeholder="Key 1&#10;Key 2&#10;Key 3..."></textarea>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="text-xs text-gray-400 block mb-1">Apps Script URL (Bridge)</label>
+                    <input type="text" id="cfg-bridge" class="input-dark">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-400 block mb-1">Blog ID</label>
+                    <input type="text" id="cfg-blogid" class="input-dark">
+                </div>
+            </div>
+
+            <div class="bg-gray-800/50 p-3 rounded border border-gray-700">
+                <label class="text-xs text-blue-400 font-bold block mb-2"><i class="fas fa-link mr-1"></i> Auto-Linker Setup (Safe Mode)</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-[10px] text-gray-500 block">WhatsApp Number (62...)</label>
+                        <input type="text" id="cfg-wa" class="input-dark" placeholder="628123456789">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-gray-500 block">Trigger Words (Comma separated)</label>
+                        <input type="text" id="cfg-trigger" class="input-dark" value="hubungi kami, pesan sekarang, whatsapp">
+                    </div>
+                </div>
+                <div class="mt-2 flex items-center gap-2">
+                    <input type="checkbox" id="cfg-footer-cta" class="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded">
+                    <label for="cfg-footer-cta" class="text-[10px] text-gray-400">Auto-Append Footer CTA (Recommended)</label>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-700 pt-4">
+                <label class="text-xs text-emerald-500 font-bold block mb-2">JSON Data Backup</label>
+                <div class="flex gap-2">
+                    <button onclick="exportJSON()" class="flex-1 py-2 bg-gray-800 text-white rounded text-xs font-bold uppercase border border-gray-600">Export Config</button>
+                    <button onclick="importJSON()" class="flex-1 py-2 bg-gray-800 text-white rounded text-xs font-bold uppercase border border-gray-600">Import Config</button>
+                </div>
+                <textarea id="cfg-json" class="input-dark h-20 mt-2 font-mono text-[10px] text-gray-500" placeholder="Paste JSON here..."></textarea>
+            </div>
+        </div>
+
+        <div class="flex gap-3 mt-6">
+            <button onclick="document.getElementById('modal-config').classList.add('hidden')" class="flex-1 py-3 bg-gray-700 text-white rounded-lg font-bold">CANCEL</button>
+            <button onclick="saveConfig()" class="flex-1 py-3 bg-emerald-600 text-white rounded-lg font-bold">SAVE SYSTEM</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- CORE SYSTEM ---
+    const STORAGE_KEY = 'OMNI_V20_DATA';
+    let config = {
+        keys: [],
+        bridge: '',
+        blogId: '',
+        waNumber: '081542471758',
+        triggerWords: 'hubungi kami, pesan sekarang, whatsapp, info lengkap',
+        footerCTA: true
+    };
+
+    let activeQueue = [];
+    let failedTasks = [];
+    let isRunning = false;
+    let currentPixelData = null;
+    let stopSignal = false;
+    let currentKeyIndex = 0;
+    let processedLog = [];
+
+    // --- HELPER: SMART RETRY & SLEEP ---
+    const sleep = (ms) => new Promise(res => setTimeout(res, ms));
+
+    async function smartRetry(fn, taskName, maxRetries = 3) {
+        for (let i = 0; i <= maxRetries; i++) {
+            try {
+                return await fn();
+            } catch (e) {
+                const isLastAttempt = i === maxRetries;
+                const isRateLimit = e.message.includes('429') || e.message.includes('quota') || e.message.includes('Limit') || e.message.includes('ResourceExhausted');
+
+                if (isLastAttempt) throw e;
+
+                const delay = Math.pow(2, i) * 2000 + (Math.random() * 1000);
+                log(`⚠️ [${taskName}] Gagal (${e.message}). Retry ${i+1}/${maxRetries} dlm ${Math.round(delay/1000)}s...`, 'warn');
+
+                await sleep(isRateLimit ? delay + 5000 : delay);
+            }
+        }
+    }
+
+    // --- INIT ---
+    window.onload = () => {
+        loadDataFromStorage();
+        updateUIFromConfig();
+        updateStatus();
+        autoPilotEngage(); // <-- AUTO PILOT TRIGGERED HERE
+        const term = document.getElementById('terminal');
+        const observer = new MutationObserver(() => term.scrollTop = term.scrollHeight);
+        observer.observe(term, { childList: true });
+    };
+
+    function loadDataFromStorage() {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if(raw) {
+            try {
+                const data = JSON.parse(raw);
+                config = data.config || config;
+            } catch(e) { console.error("Data Corrupt", e); }
+        }
+    }
+
+    function updateUIFromConfig() {
+        document.getElementById('cfg-keys').value = (config.keys || []).join('\n');
+        document.getElementById('cfg-bridge').value = config.bridge || '';
+        document.getElementById('cfg-blogid').value = config.blogId || '';
+        document.getElementById('cfg-wa').value = config.waNumber || '';
+        document.getElementById('cfg-trigger').value = config.triggerWords || 'hubungi kami, pesan sekarang';
+        document.getElementById('cfg-footer-cta').checked = config.footerCTA !== undefined ? config.footerCTA : true;
+    }
+
+    function saveData() {
+        const data = { config: {
+            keys: document.getElementById('cfg-keys').value.split('\n').filter(k => k.trim()),
+            bridge: document.getElementById('cfg-bridge').value,
+            blogId: document.getElementById('cfg-blogid').value,
+            waNumber: document.getElementById('cfg-wa').value,
+            triggerWords: document.getElementById('cfg-trigger').value,
+            footerCTA: document.getElementById('cfg-footer-cta').checked
+        }};
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        config = data.config;
+        updateStatus();
+    }
+
+    function saveConfig() {
+        saveData();
+        document.getElementById('modal-config').classList.add('hidden');
+        toast('Konfigurasi Tersimpan!', 'success');
+    }
+
+    function updateStatus() {
+        const ok = config.keys.length > 0 && config.bridge;
+        const dot = document.getElementById('status-dot');
+        const txt = document.getElementById('status-text');
+        if(ok) {
+            dot.className = "w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_#10b981]";
+            txt.className = "text-[10px] font-bold text-emerald-500";
+            txt.innerText = "ONLINE";
+        } else {
+            dot.className = "w-2 h-2 rounded-full bg-red-500";
+            txt.className = "text-[10px] font-bold text-red-500";
+            txt.innerText = "OFFLINE";
+        }
+    }
+
+    // --- AUTO PILOT (NEW) ---
+    function autoPilotEngage() {
+        // 1. Fill Architect
+        const topicIn = document.getElementById('topic-in');
+        if (!topicIn.value) topicIn.value = "Pusat Jual Beli Laptop Bekas Semarang";
+
+        // 2. Fill Pixel Forge
+        const pxTitle = document.getElementById('px-title');
+        const pxSub = document.getElementById('px-sub');
+        if (!pxTitle.value) pxTitle.value = "PUSAT LAPTOP\nSEMARANG";
+        if (!pxSub.value) pxSub.value = "Hub: 0815-4247-1758 (Mas Arga)";
+        renderPixel(); // Refresh Canvas
+
+        // 3. Fill War Room
+        const wrA = document.getElementById('wr-a');
+        const wrB = document.getElementById('wr-b');
+
+        if (!wrA.value) wrA.value = "Jual Laptop Bekas, Service Laptop Panggilan, Jual MacBook Second, Service Komputer, Install Ulang Windows";
+        if (!wrB.value) wrB.value = "Semarang, Banyumanik, Tembalang, Pedurungan, Ngaliyan, Genuk, Gunungpati, Semarang Barat, Semarang Timur, Semarang Selatan";
+
+        // 4. Auto Generate Queue (Visual only, doesn't start engine)
+        generateQueue();
+
+        toast('🚀 Mode Auto-Pilot Aktif: Data Terisi!', 'success');
+    }
+
+    function nav(view) {
+        ['architect', 'pixel', 'warroom', 'atom'].forEach(v => {
+            document.getElementById(`view-${v}`).classList.add('hidden');
+            document.getElementById(`btn-${v}`).classList.remove('nav-active');
+        });
+        document.getElementById(`view-${view}`).classList.remove('hidden');
+        document.getElementById(`btn-${view}`).classList.add('nav-active');
+        if(window.innerWidth < 1024) document.getElementById('sidebar').classList.remove('open');
+    }
+
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+    function openConfig() { document.getElementById('modal-config').classList.remove('hidden'); }
+
+    // --- API HANDLER (ENHANCED TOKEN LIMIT) ---
+    async function callGemini(prompt) {
+        if(config.keys.length === 0) throw new Error("API Key kosong!");
+        currentKeyIndex = (currentKeyIndex + 1) % config.keys.length;
+        const key = config.keys[currentKeyIndex];
+
+        try {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: {
+                        maxOutputTokens: 8192, // Mencegah artikel terpotong
+                        temperature: 0.7,
+                        topP: 0.95
+                    }
+                })
+            });
+
+            if(res.status === 429) throw new Error("429 Rate Limit");
+            if(!res.ok) throw new Error("API Error: " + res.status);
+
+            const data = await res.json();
+            return data.candidates[0].content.parts[0].text;
+        } catch(e) {
+            throw e;
+        }
+    }
+
+    // --- PROMPT ENGINEER (THE BRAIN - NGUWONGKE & SEMARANG 2026) ---
+    function buildAtomPrompt(varA, varB) {
+        const date = new Date();
+        const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+        const dateString = `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+
+        return `
+        PERAN: Anda adalah Arga, seorang Marketing profesional dan Konsultan Bisnis Lokal di Semarang yang sangat berpengalaman.
+        TONE: Otoritatif, Terpercaya, namun tetap Ramah dan "Nguwongke" (Menghargai Pembaca).
+        TARGET AUDIENS: Warga Semarang dan sekitarnya (Jawa Tengah) yang mencari solusi praktis dan terpercaya.
+
+        TOPIK UTAMA: "${varA} di ${varB}"
+        KONTEKS WAKTU: ${dateString} (Pastikan informasi terasa segar dan update).
+
+        INSTRUKSI KHUSUS PENULISAN:
+        1. STRUKTUR ARTIKEL (MARKDOWN):
+           - H1: Judul yang memikat dan mengandung Keyword Utama ("${varA}").
+           - Blockquote: Berikan ringkasan "Kenapa Anda Harus Baca Ini" dalam 2 kalimat.
+           - H2: Pembahasan Masalah/Kebutuhan (Gunakan framework PAS: Problem, Agitate, Solution).
+           - H2: Detail Solusi/Manfaat (Wajib sertakan Tabel Spesifikasi/Harga/Fitur).
+           - H3: Tips Khusus Lokal (Berikan tips yang hanya diketahui orang yang paham wilayah ${varB}).
+           - H2: Kesimpulan yang kuat.
+
+        2. GAYA BAHASA:
+           - Gunakan kata ganti "Kami" atau "Saya" agar terasa personal.
+           - Sisipkan istilah lokal yang wajar (seperti: "Lur", "Mumpung", "Cek") secara proporsional.
+           - Hindari kalimat pembuka robotik seperti "Di era digital yang berkembang pesat ini...". Langsung saja ke intinya.
+
+        3. OPTIMASI SEO & CTA:
+           - Gunakan BOLD pada kata kunci penting secara natural.
+           - Di akhir artikel, buatlah bagian "META DESCRIPTION" dengan format: [[DESC: Teks menarik maksimal 150 karakter]].
+           - Akhiri dengan Call-to-Action (CTA) yang mengajak pembaca untuk berkonsultasi atau bertanya via WhatsApp.
+
+        4. ISI KONTEN:
+           - Jika topik tentang "Barang Bekas", fokus pada KUALITAS, CEK FISIK, dan HARGA ADIL.
+           - Jika topik tentang "Kos", fokus pada KEAMANAN, KENYAMANAN, dan LOKASI STRATEGIS.
+
+        TULISKAN ARTIKELNYA SEKARANG:
+        `;
+    }
+
+    // --- ARCHITECT MODULE WITH SEO ANALYZER ---
+    async function runArchitect() {
+        const topic = document.getElementById('topic-in').value;
+        if(!topic) return toast('Masukkan topik/keyword!', 'error');
+
+        const canvas = document.getElementById('canvas');
+        canvas.innerHTML = '<div class="text-center pt-20 animate-pulse text-blue-500"><i class="fas fa-brain text-4xl mb-2"></i><br>Sedang Menganalisa & Menulis...</div>';
+
+        // Reset Dashboard
+        document.getElementById('seo-dashboard').classList.add('hidden');
+
+        try {
+            // Gunakan buildAtomPrompt untuk Architect juga agar konsisten
+            const prompt = buildAtomPrompt(topic, "Semarang"); // Default context Semarang
+            let rawContent = await callGemini(prompt);
+
+            // Auto Linker Injection
+            rawContent = injectAutoLinks(rawContent);
+
+            const htmlContent = marked.parse(rawContent);
+            canvas.innerHTML = htmlContent;
+
+            // Run SEO Analysis
+            analyzeSEO(htmlContent, topic);
+            document.getElementById('seo-dashboard').classList.remove('hidden');
+
+            toast('Analisa Selesai', 'success');
+        } catch(e) {
+            canvas.innerHTML = `<div class="text-center text-red-500 pt-20">Error: ${e.message}</div>`;
+        }
+    }
+
+    // --- SEO ANALYZER LOGIC ---
+    function analyzeSEO(html, keyword) {
+        if (!keyword) return;
+
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const text = doc.body.innerText.toLowerCase();
+        const kw = keyword.toLowerCase();
+
+        let score = 0;
+        let reports = [];
+
+        // 1. Check Title (H1) - 20 Pts
+        const h1 = doc.querySelector('h1');
+        if (h1 && h1.innerText.toLowerCase().includes(kw)) {
+            score += 20;
+            reports.push("✅ Keyword ditemukan di H1.");
+        } else {
+            reports.push("❌ Keyword utama tidak ditemukan di H1.");
+        }
+
+        // 2. First Paragraph - 15 Pts
+        const firstPara = doc.querySelector('p')?.innerText.toLowerCase() || "";
+        if (firstPara.includes(kw)) {
+            score += 15;
+            reports.push("✅ Keyword muncul di paragraf pembuka.");
+        } else {
+            reports.push("⚠️ Paragraf pembuka tidak mengandung keyword.");
+        }
+
+        // 3. Keyword Density - 15 Pts
+        const words = text.split(/\s+/).filter(w => w.length > 0);
+        const count = (text.match(new RegExp(kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length;
+        const density = (count / words.length) * 100;
+
+        // Simpan statistik
+        document.getElementById('stat-words').innerText = words.length;
+        document.getElementById('stat-density').innerText = density.toFixed(2) + '%';
+
+        if (density >= 0.5 && density <= 3) {
+            score += 15;
+            reports.push(`✅ Density ideal (${density.toFixed(2)}%).`);
+        } else if (density > 3) {
+            reports.push(`⚠️ Keyword Stuffing! (${density.toFixed(2)}%). Kurangi keyword.`);
+        } else {
+            reports.push("⚠️ Density terlalu rendah. Tambahkan keyword.");
+        }
+
+        // 4. Subheadings (H2/H3) - 15 Pts
+        const subheadings = doc.querySelectorAll('h2, h3');
+        if (subheadings.length >= 2) {
+            score += 15;
+            reports.push(`✅ Memiliki ${subheadings.length} sub-heading.`);
+        } else {
+            reports.push("❌ Struktur konten terlalu flat. Gunakan H2/H3.");
+        }
+
+        // 5. Freshness Check (New for v20.3) - 15 Pts
+        const date = new Date();
+        const year = date.getFullYear().toString();
+        if (text.includes(year)) {
+            score += 15;
+            reports.push(`✅ Konten Fresh (Menyebut tahun ${year}).`);
+        } else {
+             reports.push(`⚠️ Konten terasa usang (Tidak ada tahun ${year}).`);
+        }
+
+        // 6. Word Count - 20 Pts
+        if (words.length >= 600) {
+            score += 20;
+            reports.push(`✅ Panjang artikel mantap (${words.length} kata).`);
+        } else {
+            reports.push(`⚠️ Terlalu pendek (${words.length} kata). Minimal 600 kata.`);
+        }
+
+        // UI Update
+        document.getElementById('seo-score-badge').innerText = `${score}/100`;
+        document.getElementById('seo-score-badge').className = `px-4 py-2 rounded-lg text-xl font-black border border-gray-700 ${score > 70 ? 'bg-emerald-600 text-white' : (score > 40 ? 'bg-yellow-600 text-white' : 'bg-red-600 text-white')}`;
+        document.getElementById('seo-progress-bar').style.width = `${score}%`;
+
+        const reportHtml = reports.map(r => `
+            <div class="p-2 bg-gray-800/50 rounded border-l-2 text-gray-300 ${r.includes('✅') ? 'border-emerald-500' : 'border-orange-500'}">
+                ${r}
+            </div>
+        `).join('');
+
+        document.getElementById('seo-reports').innerHTML = reportHtml;
+    }
+
+    // --- SAFE AUTO LINKER (v20.2 Update) ---
+    function injectAutoLinks(markdownText) {
+        if(!config.waNumber || !config.triggerWords) return markdownText;
+
+        const triggers = config.triggerWords.split(',').map(t => t.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+        const waLink = `https://wa.me/${config.waNumber.replace(/\+/g, '')}`;
+
+        let processedText = markdownText;
+
+        triggers.forEach(word => {
+            const regex = new RegExp(`\\b(${word})\\b`, 'gi');
+            processedText = processedText.replace(regex, `[$1](${waLink})`);
+        });
+
+        if (config.footerCTA) {
+            processedText += `\n\n---\n\n**[👉 Hubungi Kami via WhatsApp Sekarang!](${waLink})**`;
+        }
+
+        return processedText;
+    }
+
+    async function copyContent() {
+        const canvas = document.getElementById('canvas');
+        try {
+            await navigator.clipboard.writeText(canvas.innerText);
+            toast('Konten Disalin!', 'success');
+        } catch (err) {
+            toast('Gagal menyalin konten', 'error');
+        }
+    }
+
+    // --- PIXEL FORGE v2 ---
+    function renderPixel() {
+        const cvs = document.getElementById('mainCanvas');
+        const ctx = cvs.getContext('2d');
+        const w = cvs.width, h = cvs.height;
+        const c1 = document.getElementById('px-c1').value;
+        const c2 = document.getElementById('px-c2').value;
+        const pattern = document.getElementById('px-pattern').value;
+
+        const grd = ctx.createLinearGradient(0, 0, 0, h);
+        grd.addColorStop(0, c1);
+        grd.addColorStop(1, c2);
+        ctx.fillStyle = grd;
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.fillStyle = "rgba(255,255,255,0.05)";
+        if(pattern === 'grid') {
+            for(let i=0; i<w; i+=40) ctx.fillRect(i, 0, 1, h);
+            for(let i=0; i<h; i+=40) ctx.fillRect(0, i, w, 1);
+        } else if(pattern === 'lines') {
+            for(let i=0; i<h; i+=4) ctx.fillRect(0, i, w, 1);
+        }
+
+        const title = document.getElementById('px-title').value || "JUDUL KONTEN";
+        const sub = document.getElementById('px-sub').value || "Created by OMNI";
+
+        ctx.fillStyle = 'white';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = "rgba(0,0,0,0.5)";
+        ctx.shadowBlur = 10;
+
+        ctx.font = "bold 50px Arial";
+        wrapText(ctx, title.toUpperCase(), w/2, h/2 - 20, 700, 60);
+
+        ctx.font = "20px Arial";
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = "#cbd5e1";
+        ctx.fillText(sub, w/2, h - 30);
+
+        // Prepare compressed version for Atom (Max-width: 400px, Quality: 0.5)
+        const tempCvs = document.createElement('canvas');
+        const maxW = 400;
+        const scale = Math.min(1, maxW / w);
+        tempCvs.width = w * scale;
+        tempCvs.height = h * scale;
+        const tempCtx = tempCvs.getContext('2d');
+        tempCtx.drawImage(cvs, 0, 0, tempCvs.width, tempCvs.height);
+        currentPixelData = tempCvs.toDataURL('image/jpeg', 0.5);
+    }
+
+    function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+        const words = text.split(' ');
+        let line = '';
+        for(let n = 0; n < words.length; n++) {
+            const testLine = line + words[n] + ' ';
+            const metrics = ctx.measureText(testLine);
+            if (metrics.width > maxWidth && n > 0) {
+                ctx.fillText(line, x, y);
+                line = words[n] + ' ';
+                y += lineHeight;
+            } else {
+                line = testLine;
+            }
+        }
+        ctx.fillText(line, x, y);
+    }
+
+    function downloadPixel() {
+        const link = document.createElement('a');
+        link.download = 'omni-pixel.png';
+        link.href = document.getElementById('mainCanvas').toDataURL();
+        link.click();
+    }
+
+    function usePixelForAtom() {
+        const title = document.getElementById('px-title').value;
+        if(!currentPixelData) renderPixel();
+        nav('atom');
+        log(`🎨 Visual Asset "${title}" ditambahkan ke buffer pengiriman.`, 'success');
+        toast('Visual Siap di Bunker', 'success');
+    }
+
+    // --- WAR ROOM ---
+    function autoGeo() {
+        document.getElementById('wr-b').value = "Jakarta Pusat, Jakarta Selatan, Bandung, Surabaya, Medan, Makassar";
+    }
+
+    function generateQueue() {
+        const a = document.getElementById('wr-a').value.split(',').map(s=>s.trim()).filter(s=>s);
+        const b = document.getElementById('wr-b').value.split(',').map(s=>s.trim()).filter(s=>s);
+
+        if(!a.length || !b.length) return toast('Isi variabel dulu!', 'error');
+
+        activeQueue = [];
+        a.forEach(va => b.forEach(vb => activeQueue.push({ a: va, b: vb, status: 'pending' })));
+
+        document.getElementById('queue-count').innerText = activeQueue.length + " Items";
+        const list = document.getElementById('queue-list');
+        list.innerHTML = activeQueue.map((item, i) => `
+            <div class="p-2 bg-gray-800 rounded border border-gray-700 text-xs flex justify-between">
+                <span>${item.a} + ${item.b}</span>
+                <span class="text-gray-500">Wait</span>
+            </div>
+        `).join('');
+
+        document.getElementById('btn-send-atom').disabled = false;
+        document.getElementById('btn-send-atom').className = "mt-4 w-full py-2 bg-emerald-600 text-white rounded-lg text-xs font-bold uppercase hover:bg-emerald-500";
+        toast(`${activeQueue.length} Kombinasi Dibuat`, 'success');
+    }
+
+    function sendToAtom() {
+        nav('atom');
+        log(`Menerima ${activeQueue.length} item dari War Room.`, 'info');
+    }
+
+    // --- ATOM AUTOMATION LOGIC (FINAL ROBUST VERSION) ---
+    function stopAtom() {
+        if(isRunning) {
+            stopSignal = true;
+            document.getElementById('btn-stop').innerText = "PAUSED";
+            log('🛑 Perintah PAUSE diterima. Menunggu worker selesai...', 'warn');
+        }
+    }
+
+    async function startAtom() {
+        if(isRunning) return;
+        if(!activeQueue.length) return toast('Antrian Kosong!', 'error');
+        if(!config.bridge) return toast('Bridge URL belum diisi!', 'error');
+
+        // Reset State
+        isRunning = true;
+        stopSignal = false;
+        failedTasks = [];
+        document.getElementById('atom-failure-controls').classList.add('hidden');
+        document.getElementById('btn-start').disabled = true;
+        document.getElementById('btn-stop').disabled = false;
+        document.getElementById('btn-stop').innerText = "PAUSE";
+        document.getElementById('atom-status').innerText = "RUNNING (PARALLEL)";
+        document.getElementById('atom-status').className = "text-xs font-bold text-emerald-500 animate-pulse";
+        document.getElementById('progress-container').classList.remove('hidden');
+
+        const CONCURRENCY = 3;
+        const delaySec = parseInt(document.getElementById('atom-delay').value) || 3;
+
+        log(`🚀 Memulai Parallel Mode: ${CONCURRENCY} Workers`, 'info');
+
+        // --- WORKER POOL LOGIC (Shift Method) ---
+        const workerQueue = activeQueue.map((item, index) => ({ item, index })).filter(q => q.item.status === 'pending');
+
+        const worker = async (id) => {
+            while (!stopSignal && workerQueue.length > 0) {
+                const task = workerQueue.shift();
+                if (!task) break;
+
+                const { item, index } = task;
+                item.status = 'processing';
+
+                // Update Progress bar
+                const doneCount = activeQueue.filter(i => i.status === 'done' || i.status === 'failed').length;
+                const progress = (doneCount / activeQueue.length) * 100;
+                document.getElementById('progress-bar').style.width = `${progress}%`;
+
+                log(`[W${id}] ⚙️ Memproses: ${item.a} di ${item.b}...`, 'info');
+
+                try {
+                    // 1. AI Generation (With New Prompt)
+                    let content = await smartRetry(async () => {
+                         // Gunakan buildAtomPrompt untuk konsistensi di Atom juga
+                         const prompt = buildAtomPrompt(item.a, item.b);
+                         return await callGemini(prompt);
+                    }, `AI-${item.a}`, 3);
+
+                    // AUTO LINKER IN ATOM (SAFE MODE)
+                    content = injectAutoLinks(content);
+
+                    // --- SEO PRE-FLIGHT CHECK ---
+                    const introText = content.substring(0, 500).toLowerCase();
+                    if(!introText.includes(item.a.toLowerCase())) {
+                        log(`⚠️ [W${id}] SEO Warning: Keyword "${item.a}" tidak ditemukan di awal artikel.`, 'warn');
+                    }
+
+                    // 2. Publish Logic
+                    const payload = {
+                        action: 'publish',
+                        blogId: config.blogId,
+                        title: `${item.a} di ${item.b} Terpercaya`,
+                        content: (currentPixelData ? `<div style="text-align:center"><img src="${currentPixelData}" style="max-width:100%; height:auto; border-radius:10px;" /></div><br><br>` : '') + marked.parse(content),
+                        image: currentPixelData,
+                        labels: [item.a, item.b, "OMNI"]
+                    };
+
+                    await smartRetry(async () => {
+                        const res = await fetch(config.bridge, {
+                            method: 'POST',
+                            headers: {'Content-Type': 'text/plain;charset=utf-8'},
+                            body: JSON.stringify(payload)
+                        });
+                        if(!res.ok) throw new Error(`HTTP Error ${res.status}`);
+                    }, `Post-${item.a}`, 3);
+
+                    processedLog.push({ time: new Date().toISOString(), title: payload.title, status: 'SUCCESS' });
+                    item.status = 'done';
+                    log(`✅ [W${id}] Sukses: ${item.a}`, 'success');
+
+                } catch(e) {
+                    log(`❌ [W${id}] FATAL: ${item.a} Gagal Total (${e.message})`, 'error');
+                    processedLog.push({ time: new Date().toISOString(), title: `${item.a} ${item.b}`, status: 'FATAL_FAIL' });
+                    item.status = 'failed';
+
+                    failedTasks.push({
+                        topic: `${item.a} di ${item.b}`,
+                        varA: item.a,
+                        varB: item.b,
+                        reason: e.message,
+                        time: new Date().toLocaleString()
+                    });
+                    document.getElementById('atom-failure-controls').classList.remove('hidden');
+                }
+
+                if(!stopSignal) {
+                    await sleep(delaySec * 1000);
+                }
+            }
+        };
+
+        const threads = Array(CONCURRENCY).fill(null).map((_, i) => worker(i+1));
+        await Promise.all(threads);
+
+        isRunning = false;
+        document.getElementById('btn-start').disabled = false;
+        document.getElementById('btn-stop').disabled = true;
+        document.getElementById('atom-status').innerText = stopSignal ? "PAUSED" : "COMPLETED";
+        document.getElementById('atom-status').className = stopSignal ? "text-xs font-bold text-yellow-500" : "text-xs font-bold text-blue-500";
+
+        if(!stopSignal) {
+            if(failedTasks.length > 0) {
+                toast(`Selesai dengan ${failedTasks.length} Error. Cek Log!`, 'error');
+            } else {
+                toast('Semua Batch Selesai Sempurna!', 'success');
+            }
+        }
+    }
+
+    // --- FAILURE LOGIC ---
+    function downloadFailureLog() {
+        if (failedTasks.length === 0) return toast("Tidak ada log kegagalan.", "info");
+
+        let logContent = "OMNI ATOM ENGINE - FAILURE LOG\n";
+        logContent += "Generated: " + new Date().toLocaleString() + "\n";
+        logContent += "-------------------------------------------\n\n";
+
+        failedTasks.forEach((t, i) => {
+            logContent += `${i+1}. TOPIC: ${t.topic}\n`;
+            logContent += `   Detail: ${t.varA} | ${t.varB}\n`;
+            logContent += `   Error: ${t.reason}\n`;
+            logContent += `   Timestamp: ${t.time}\n`;
+            logContent += "-------------------------------------------\n";
+        });
+
+        const blob = new Blob([logContent], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `failed_log_${Date.now()}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        toast("Log Error Diunduh!", "success");
+    }
+
+    function requeueFailed() {
+        if (failedTasks.length === 0) return toast("Tidak ada tugas gagal.", "info");
+
+        let count = 0;
+        activeQueue.forEach(item => {
+            if(item.status === 'failed') {
+                item.status = 'pending';
+                count++;
+            }
+        });
+
+        if(count > 0) {
+            document.getElementById('atom-failure-controls').classList.add('hidden');
+            failedTasks = [];
+            document.getElementById('atom-status').innerText = "READY (RE-QUEUED)";
+            document.getElementById('atom-status').className = "text-xs font-bold text-orange-500 animate-pulse";
+            toast(`${count} Item dimasukkan ulang. Klik Start!`, 'success');
+            log(`♻️ SMART RE-QUEUE: ${count} item dikembalikan ke antrian.`, 'info');
+        } else {
+            toast('Tidak ada item gagal untuk diulang.', 'info');
+        }
+    }
+
+    function log(msg, type='normal') {
+        const term = document.getElementById('terminal');
+        const colorClass = type === 'error' ? 'log-error' : (type === 'success' ? 'log-success' : (type === 'warn' ? 'log-warn' : 'log-info'));
+        const time = new Date().toLocaleTimeString();
+        term.innerHTML += `<div class="${colorClass}">[${time}] ${msg}</div>`;
+    }
+
+    function exportReport() {
+        if(!processedLog.length) return toast('Belum ada data log!', 'error');
+        let csv = "Time,Title,Status\n";
+        processedLog.forEach(row => {
+            csv += `${row.time},"${row.title}",${row.status}\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `OMNI_Report_${Date.now()}.csv`;
+        a.click();
+    }
+
+    async function exportJSON() {
+        const json = JSON.stringify({ config }, null, 2);
+        document.getElementById('cfg-json').value = json;
+        try {
+            await navigator.clipboard.writeText(json);
+            toast('Config disalin ke Clipboard', 'success');
+        } catch (err) {
+            toast('Gagal menyalin config', 'error');
+        }
+    }
+
+    function importJSON() {
+        const raw = document.getElementById('cfg-json').value;
+        if(!raw) return;
+        try {
+            const data = JSON.parse(raw);
+            if(data.config) {
+                config = data.config;
+                updateUIFromConfig();
+                saveData();
+                toast('Config Berhasil Dimuat!', 'success');
+            }
+        } catch(e) { toast('JSON Invalid', 'error'); }
+    }
+
+    // --- UI UTILS ---
+    function toast(msg, type) {
+        const div = document.createElement('div');
+        div.className = `p-3 rounded-lg shadow-lg text-xs font-bold text-white mb-2 animate-bounce ${type==='error'?'bg-red-600':'bg-emerald-600'}`;
+        div.innerText = msg;
+        document.getElementById('toast-area').appendChild(div);
+        setTimeout(() => div.remove(), 3000);
+    }
+</script>
+</body>
+</html>
