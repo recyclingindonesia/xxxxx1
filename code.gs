@@ -37,11 +37,16 @@ function doPost(e) {
   const response = { status: 'error', message: 'Unknown request' };
 
   try {
-    if (!e.postData || !e.postData.contents) {
-      throw new Error('No post data received');
+    if (!e || !e.postData || !e.postData.contents) {
+      throw new Error('No event object or post data received. This can happen if the script is run manually from the editor.');
     }
 
-    const payload = JSON.parse(e.postData.contents);
+    let payload;
+    try {
+      payload = JSON.parse(e.postData.contents);
+    } catch (e) {
+      throw new Error('Invalid JSON content received: ' + e.message);
+    }
     const action = payload.action;
 
     switch(action) {
