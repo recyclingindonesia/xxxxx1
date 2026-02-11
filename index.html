@@ -379,6 +379,14 @@
             </div>
 
             <div class="border-t border-gray-700 pt-4">
+                <label class="text-xs text-emerald-500 font-bold block mb-2"><i class="fas fa-cloud-upload-alt mr-1"></i> Cloud Sync (Spreadsheet)</label>
+                <div class="flex gap-2">
+                    <button onclick="syncToCloud()" class="flex-1 py-2 bg-blue-600/20 text-blue-400 hover:bg-blue-600/40 rounded text-xs font-bold uppercase border border-blue-500/30"><i class="fas fa-cloud-upload-alt mr-1"></i> Push to Cloud</button>
+                    <button onclick="syncFromCloud()" class="flex-1 py-2 bg-purple-600/20 text-purple-400 hover:bg-purple-600/40 rounded text-xs font-bold uppercase border border-purple-500/30"><i class="fas fa-cloud-download-alt mr-1"></i> Fetch from Cloud</button>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-700 pt-4">
                 <label class="text-xs text-emerald-500 font-bold block mb-2">JSON Data Backup</label>
                 <div class="flex gap-2">
                     <button onclick="exportJSON()" class="flex-1 py-2 bg-gray-800 text-white rounded text-xs font-bold uppercase border border-gray-600">Export Config</button>
@@ -1102,6 +1110,67 @@
                 toast('Config Berhasil Dimuat!', 'success');
             }
         } catch(e) { toast('JSON Invalid', 'error'); }
+    }
+
+    async function syncToCloud() {
+        if(!config.bridge) return toast('Bridge URL kosong!', 'error');
+        toast('Sedang sinkronisasi...', 'info');
+
+        try {
+            const payload = {
+                action: 'saveSettings',
+                config: {
+                    keys: document.getElementById('cfg-keys').value.split('\n').filter(k => k.trim()),
+                    bridge: document.getElementById('cfg-bridge').value,
+                    blogId: document.getElementById('cfg-blogid').value,
+                    waNumber: document.getElementById('cfg-wa').value,
+                    triggerWords: document.getElementById('cfg-trigger').value,
+                    footerCTA: document.getElementById('cfg-footer-cta').checked
+                }
+            };
+
+            const res = await fetch(config.bridge, {
+                method: 'POST',
+                headers: {'Content-Type': 'text/plain;charset=utf-8'},
+                body: JSON.stringify(payload)
+            });
+
+            if(!res.ok) throw new Error('HTTP ' + res.status);
+            const result = await res.json();
+            if(result.status === 'success') {
+                toast('Berhasil Simpan ke Cloud!', 'success');
+            } else {
+                throw new Error(result.message);
+            }
+        } catch(e) {
+            toast('Gagal Sync: ' + e.message, 'error');
+        }
+    }
+
+    async function syncFromCloud() {
+        if(!config.bridge) return toast('Bridge URL kosong!', 'error');
+        toast('Sedang mengambil data...', 'info');
+
+        try {
+            const res = await fetch(config.bridge, {
+                method: 'POST',
+                headers: {'Content-Type': 'text/plain;charset=utf-8'},
+                body: JSON.stringify({ action: 'getSettings' })
+            });
+
+            if(!res.ok) throw new Error('HTTP ' + res.status);
+            const result = await res.json();
+            if(result.status === 'success' && result.data) {
+                config = result.data;
+                updateUIFromConfig();
+                saveData();
+                toast('Config Dimuat dari Cloud!', 'success');
+            } else {
+                toast('Data Cloud tidak ditemukan.', 'warn');
+            }
+        } catch(e) {
+            toast('Gagal Fetch: ' + e.message, 'error');
+        }
     }
 
     // --- UI UTILS ---

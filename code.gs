@@ -60,6 +60,16 @@ function doPost(e) {
         response.status = 'success';
         break;
 
+      case 'saveSettings':
+        response.data = handleSaveSettings(payload);
+        response.status = 'success';
+        break;
+
+      case 'getSettings':
+        response.data = handleGetSettings(payload);
+        response.status = 'success';
+        break;
+
       default:
         throw new Error('Action "' + action + '" not supported');
     }
@@ -147,6 +157,57 @@ function handleUpdate(data) {
   }
 
   throw new Error('Post not found in records');
+}
+
+/**
+ * Handle saving system settings to Sheet
+ */
+function handleSaveSettings(data) {
+  const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+  let sheet = ss.getSheetByName('Settings');
+
+  if (!sheet) {
+    sheet = ss.insertSheet('Settings');
+    sheet.appendRow(['Key', 'Value']);
+    sheet.getRange(1, 1, 1, 2).setFontWeight('bold');
+  }
+
+  const settingsJson = JSON.stringify(data.config);
+
+  // Look for existing 'config' row
+  const values = sheet.getDataRange().getValues();
+  let found = false;
+  for (let i = 1; i < values.length; i++) {
+    if (values[i][0] === 'config') {
+      sheet.getRange(i + 1, 2).setValue(settingsJson);
+      found = true;
+      break;
+    }
+  }
+
+  if (!found) {
+    sheet.appendRow(['config', settingsJson]);
+  }
+
+  return { success: true };
+}
+
+/**
+ * Handle retrieving system settings from Sheet
+ */
+function handleGetSettings(data) {
+  const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+  const sheet = ss.getSheetByName('Settings');
+  if (!sheet) return null;
+
+  const values = sheet.getDataRange().getValues();
+  for (let i = 1; i < values.length; i++) {
+    if (values[i][0] === 'config') {
+      return JSON.parse(values[i][1]);
+    }
+  }
+
+  return null;
 }
 
 /**

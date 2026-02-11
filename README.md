@@ -7,6 +7,7 @@ Professional Sales Post Manager for Blogger with AI-Enhanced SEO and Automation.
 - **Pixel Forge:** Client-side visual asset creation with auto-compression.
 - **War Room:** Content multiplier for geo-targeted niche marketing.
 - **Atom Bunker:** Parallel automation engine for bulk publishing.
+- **Cloud Sync:** Synchronize system settings (API keys, bridge URL, etc.) with Google Sheets for multi-device persistence.
 - **Persistence:** Base64 image storage in Google Sheets to prevent data loss.
 
 ## Installation & Setup
