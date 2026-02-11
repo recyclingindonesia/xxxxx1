@@ -803,6 +803,7 @@
         ctx.fillText(sub, w/2, h - 30);
 
         // Prepare compressed version for Atom (Max-width: 400px, Quality: 0.5)
+        // Note: 400px at 0.5 quality keeps Base64 string well under Google Sheets 50k cell limit.
         const tempCvs = document.createElement('canvas');
         const maxW = 400;
         const scale = Math.min(1, maxW / w);
