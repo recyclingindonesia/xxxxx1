@@ -290,10 +290,26 @@
                         <span id="atom-status" class="text-xs font-bold text-yellow-500">IDLE</span>
                     </div>
 
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="space-y-1">
+                            <label class="text-[10px] text-gray-400">Batch Size</label>
+                            <input type="number" id="atom-batch" class="input-dark" value="10" min="1" max="50">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] text-gray-400">Jitter (Detik)</label>
+                            <input type="number" id="atom-jitter" class="input-dark" value="5" min="0">
+                        </div>
+                    </div>
+
                     <div class="space-y-2">
-                        <label class="text-[10px] text-gray-400">Jeda Aman per Worker (Detik)</label>
+                        <label class="text-[10px] text-gray-400">Jeda Dasar per Worker (Detik)</label>
                         <input type="number" id="atom-delay" class="input-dark" value="3">
-                        <p class="text-[9px] text-gray-500">Nilai aman: 3-5 detik untuk menghindari spam detect.</p>
+                        <p class="text-[9px] text-gray-500">Delay acak: Jeda + (0 s.d Jitter)</p>
+                    </div>
+
+                    <div class="flex items-center gap-2 bg-gray-800/50 p-2 rounded border border-gray-700">
+                        <input type="checkbox" id="atom-auto-seo" class="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded" checked>
+                        <label for="atom-auto-seo" class="text-[10px] text-gray-400">Enable SEO Self-Correction Loop</label>
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">
@@ -548,6 +564,33 @@
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
     function openConfig() { document.getElementById('modal-config').classList.remove('hidden'); }
 
+    // --- AI CONTENT ENGINE (WITH AUTO-OPTIMIZATION) ---
+    async function generateOptimizedContent(prompt, keyword, id = "W0") {
+        let content = await smartRetry(async () => {
+             return await callGemini(prompt);
+        }, `AI-${keyword}`, 3);
+
+        let htmlContent = marked.parse(content);
+        let seo = analyzeSEOData(htmlContent, keyword);
+
+        const isAutoSeo = document.getElementById('atom-auto-seo')?.checked;
+
+        if (isAutoSeo && seo.score < 80) {
+            log(`[${id}] ⚠️ SEO Score rendah (${seo.score}/100). Mencoba optimasi otomatis...`, 'warn');
+            const issues = seo.reports.filter(r => r.includes('❌') || r.includes('⚠️')).join(', ');
+            const feedbackPrompt = `${prompt}\n\nPERINGATAN SEO: Artikel sebelumnya mendapat skor ${seo.score}/100.\nMASALAH: ${issues}\nTolong tulis ulang artikel dengan memperbaiki masalah di atas agar lebih SEO-friendly. Pastikan panjang artikel minimal 600 kata dan keyword "${keyword}" muncul secara natural di H1 dan paragraf pembuka.`;
+
+            content = await smartRetry(async () => {
+                return await callGemini(feedbackPrompt);
+            }, `AI-Retry-${keyword}`, 2);
+
+            htmlContent = marked.parse(content);
+            seo = analyzeSEOData(htmlContent, keyword);
+            log(`[${id}] ✅ Optimasi selesai. Skor baru: ${seo.score}/100`, 'success');
+        }
+        return { content, seo };
+    }
+
     // --- API HANDLER (ENHANCED TOKEN LIMIT) ---
     async function callGemini(prompt) {
         if(config.keys.length === 0) throw new Error("API Key kosong!");
@@ -633,16 +676,17 @@
         try {
             // Gunakan buildAtomPrompt untuk Architect juga agar konsisten
             const prompt = buildAtomPrompt(topic, "Semarang"); // Default context Semarang
-            let rawContent = await callGemini(prompt);
+
+            const { content: rawContent, seo: seoData } = await generateOptimizedContent(prompt, topic, "ARCH");
 
             // Auto Linker Injection
-            rawContent = injectAutoLinks(rawContent);
+            const linkedContent = injectAutoLinks(rawContent);
 
-            const htmlContent = marked.parse(rawContent);
+            const htmlContent = marked.parse(linkedContent);
             canvas.innerHTML = htmlContent;
 
             // Run SEO Analysis
-            analyzeSEO(htmlContent, topic);
+            updateSEOUI(seoData);
             document.getElementById('seo-dashboard').classList.remove('hidden');
 
             toast('Analisa Selesai', 'success');
@@ -652,8 +696,8 @@
     }
 
     // --- SEO ANALYZER LOGIC ---
-    function analyzeSEO(html, keyword) {
-        if (!keyword) return;
+    function analyzeSEOData(html, keyword) {
+        if (!keyword) return null;
 
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
@@ -685,10 +729,6 @@
         const words = text.split(/\s+/).filter(w => w.length > 0);
         const count = (text.match(new RegExp(kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length;
         const density = (count / words.length) * 100;
-
-        // Simpan statistik
-        document.getElementById('stat-words').innerText = words.length;
-        document.getElementById('stat-density').innerText = density.toFixed(2) + '%';
 
         if (density >= 0.5 && density <= 3) {
             score += 15;
@@ -726,12 +766,20 @@
             reports.push(`⚠️ Terlalu pendek (${words.length} kata). Minimal 600 kata.`);
         }
 
-        // UI Update
-        document.getElementById('seo-score-badge').innerText = `${score}/100`;
-        document.getElementById('seo-score-badge').className = `px-4 py-2 rounded-lg text-xl font-black border border-gray-700 ${score > 70 ? 'bg-emerald-600 text-white' : (score > 40 ? 'bg-yellow-600 text-white' : 'bg-red-600 text-white')}`;
-        document.getElementById('seo-progress-bar').style.width = `${score}%`;
+        return { score, reports, wordCount: words.length, density };
+    }
 
-        const reportHtml = reports.map(r => `
+    function updateSEOUI(data) {
+        if(!data) return;
+
+        document.getElementById('stat-words').innerText = data.wordCount;
+        document.getElementById('stat-density').innerText = data.density.toFixed(2) + '%';
+
+        document.getElementById('seo-score-badge').innerText = `${data.score}/100`;
+        document.getElementById('seo-score-badge').className = `px-4 py-2 rounded-lg text-xl font-black border border-gray-700 ${data.score > 70 ? 'bg-emerald-600 text-white' : (data.score > 40 ? 'bg-yellow-600 text-white' : 'bg-red-600 text-white')}`;
+        document.getElementById('seo-progress-bar').style.width = `${data.score}%`;
+
+        const reportHtml = data.reports.map(r => `
             <div class="p-2 bg-gray-800/50 rounded border-l-2 text-gray-300 ${r.includes('✅') ? 'border-emerald-500' : 'border-orange-500'}">
                 ${r}
             </div>
@@ -772,7 +820,7 @@
     }
 
     // --- PIXEL FORGE v2 ---
-    function renderPixel() {
+    function renderPixel(customTitle = null, customSub = null) {
         const cvs = document.getElementById('mainCanvas');
         const ctx = cvs.getContext('2d');
         const w = cvs.width, h = cvs.height;
@@ -794,8 +842,8 @@
             for(let i=0; i<h; i+=4) ctx.fillRect(0, i, w, 1);
         }
 
-        const title = document.getElementById('px-title').value || "JUDUL KONTEN";
-        const sub = document.getElementById('px-sub').value || "Created by OMNI";
+        const title = customTitle || document.getElementById('px-title').value || "JUDUL KONTEN";
+        const sub = customSub || document.getElementById('px-sub').value || "Created by OMNI";
 
         ctx.fillStyle = 'white';
         ctx.textAlign = 'center';
@@ -819,7 +867,10 @@
         tempCvs.height = h * scale;
         const tempCtx = tempCvs.getContext('2d');
         tempCtx.drawImage(cvs, 0, 0, tempCvs.width, tempCvs.height);
-        currentPixelData = tempCvs.toDataURL('image/jpeg', 0.5);
+        const base64Data = tempCvs.toDataURL('image/jpeg', 0.5);
+
+        if(!customTitle) currentPixelData = base64Data;
+        return base64Data;
     }
 
     function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
@@ -915,11 +966,17 @@
 
         const CONCURRENCY = 3;
         const delaySec = parseInt(document.getElementById('atom-delay').value) || 3;
+        const jitterSec = parseInt(document.getElementById('atom-jitter').value) || 5;
+        const batchLimit = parseInt(document.getElementById('atom-batch').value) || 10;
 
-        log(`🚀 Memulai Parallel Mode: ${CONCURRENCY} Workers`, 'info');
+        log(`🚀 Memulai Parallel Mode: ${CONCURRENCY} Workers (Batch: ${batchLimit})`, 'info');
 
         // --- WORKER POOL LOGIC (Shift Method) ---
-        const workerQueue = activeQueue.map((item, index) => ({ item, index })).filter(q => q.item.status === 'pending');
+        const workerQueue = activeQueue.map((item, index) => ({ item, index }))
+            .filter(q => q.item.status === 'pending')
+            .slice(0, batchLimit);
+
+        const totalToProcess = workerQueue.length;
 
         const worker = async (id) => {
             while (!stopSignal && workerQueue.length > 0) {
@@ -937,29 +994,23 @@
                 log(`[W${id}] ⚙️ Memproses: ${item.a} di ${item.b}...`, 'info');
 
                 try {
-                    // 1. AI Generation (With New Prompt)
-                    let content = await smartRetry(async () => {
-                         // Gunakan buildAtomPrompt untuk konsistensi di Atom juga
-                         const prompt = buildAtomPrompt(item.a, item.b);
-                         return await callGemini(prompt);
-                    }, `AI-${item.a}`, 3);
+                    // 1. Dynamic Visual Asset Generation
+                    const tailoredPixel = renderPixel(`${item.a.toUpperCase()}\nDI ${item.b.toUpperCase()}`, "Hubungi Kami: " + config.waNumber);
 
-                    // AUTO LINKER IN ATOM (SAFE MODE)
-                    content = injectAutoLinks(content);
+                    // 2. AI Content Generation (With Auto-Optimization)
+                    const prompt = buildAtomPrompt(item.a, item.b);
+                    const { content, seo } = await generateOptimizedContent(prompt, item.a, `W${id}`);
 
-                    // --- SEO PRE-FLIGHT CHECK ---
-                    const introText = content.substring(0, 500).toLowerCase();
-                    if(!introText.includes(item.a.toLowerCase())) {
-                        log(`⚠️ [W${id}] SEO Warning: Keyword "${item.a}" tidak ditemukan di awal artikel.`, 'warn');
-                    }
+                    // 3. Auto Linker in Atom
+                    const linkedContent = injectAutoLinks(content);
 
-                    // 2. Publish Logic
+                    // 4. Publish Logic
                     const payload = {
                         action: 'publish',
                         blogId: config.blogId,
                         title: `${item.a} di ${item.b} Terpercaya`,
-                        content: (currentPixelData ? `<div style="text-align:center"><img src="${currentPixelData}" style="max-width:100%; height:auto; border-radius:10px;" /></div><br><br>` : '') + marked.parse(content),
-                        image: currentPixelData,
+                        content: `<div style="text-align:center"><img src="${tailoredPixel}" style="max-width:100%; height:auto; border-radius:10px;" /></div><br><br>` + marked.parse(linkedContent),
+                        image: tailoredPixel,
                         labels: [item.a, item.b, "OMNI"]
                     };
 
@@ -992,7 +1043,12 @@
                 }
 
                 if(!stopSignal) {
-                    await sleep(delaySec * 1000);
+                    const randomJitter = Math.floor(Math.random() * (jitterSec + 1));
+                    const totalDelay = delaySec + randomJitter;
+                    if (workerQueue.length > 0) {
+                        log(`[W${id}] 💤 Jeda ${totalDelay}s...`, 'info');
+                        await sleep(totalDelay * 1000);
+                    }
                 }
             }
         };
