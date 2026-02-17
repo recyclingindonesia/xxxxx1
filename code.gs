@@ -53,8 +53,9 @@ function doPost(e) {
     if (action === 'createPost') return handleCreatePost(data);
     if (action === 'updatePost') return handleUpdatePost(data);
     if (action === 'deletePost') return handleDeletePost(data);
+    if (action === 'publish') return handlePublish(data);
 
-    return jsonResponse({ success: false, message: "Invalid action" });
+    return jsonResponse({ success: false, message: "Invalid action: " + action });
   } catch (err) { return jsonResponse({ success: false, message: err.toString() }); }
 }
 
@@ -95,6 +96,19 @@ function handleCreatePost(data) {
   const bloggerRes = postToBlogger(data);
   savePostToSpreadsheet(data, bloggerRes);
   return jsonResponse({ success: true, url: bloggerRes.url });
+}
+
+function handlePublish(data) {
+  const blogId = data.blogId || getSecrets().blogId;
+  if (!blogId) return jsonResponse({ success: false, message: "Blog ID missing" });
+
+  const res = Blogger.Posts.insert({
+    title: data.title,
+    content: data.content,
+    labels: data.labels || []
+  }, blogId);
+
+  return jsonResponse({ success: true, url: res.url, id: res.id });
 }
 
 function handleUpdatePost(data) {

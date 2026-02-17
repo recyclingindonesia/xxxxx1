@@ -1,298 +1,582 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OmniPost Pro - Sales Management Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#020617">
+    <title>OMNI GENESIS // v22.4 HYBRID UI</title>
+
+    <!-- LIBRARIES -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <style> .hidden { display: none; } </style>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <!-- FONTS -->
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=Inter:wght@300;400;600&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+
+    <!-- CONFIG TAILWIND -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace'],
+                        display: ['Space Grotesk', 'sans-serif']
+                    },
+                    colors: {
+                        'void': '#020617',
+                        'glass': 'rgba(15, 23, 42, 0.6)',
+                        'cyan-glow': '#06b6d4',
+                        'neon-red': '#f43f5e',
+                        'neon-green': '#10b981'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- CUSTOM CSS -->
+    <style>
+        body { background-color: #020617; color: #94a3b8; overflow: hidden; font-family: 'Inter', sans-serif; }
+        .holo-panel { background: rgba(30, 41, 59, 0.3); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .input-gen { background: rgba(2, 6, 23, 0.8); border: 1px solid #1e293b; color: #e2e8f0; font-family: 'Fira Code', monospace; font-size: 13px; transition: all 0.3s ease; }
+        .input-gen:focus { border-color: #06b6d4; box-shadow: 0 0 10px rgba(6, 182, 212, 0.2); outline: none; }
+        .nav-btn.active { background: rgba(6, 182, 212, 0.1); color: #06b6d4; border-right: 3px solid #06b6d4; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        .prose h1, .prose h2 { color: #f8fafc; font-family: 'Space Grotesk'; }
+        .hidden { display: none !important; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .toast-enter { animation: slideIn 0.3s ease-out forwards; }
+    </style>
 </head>
-<body class="bg-gray-50 min-h-screen font-sans text-gray-900">
-    <div class="container mx-auto px-4 py-8 max-w-5xl">
-        <header class="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
-            <div class="text-center md:text-left">
-                <h1 class="text-4xl font-extrabold text-blue-700 tracking-tight">OmniPost Pro</h1>
-                <div class="flex items-center gap-2">
-                    <p class="text-gray-500 font-medium italic text-sm">Professional Sales Post Manager</p>
-                    <div id="status-sync" class="hidden bg-green-50 text-green-700 px-2 py-0.5 rounded-md text-[10px] font-bold border border-green-100 flex items-center gap-1">
-                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                        <span id="blog-domain-text">Connected</span>
-                    </div>
+<body class="flex h-screen selection:bg-cyan-500/30 selection:text-cyan-200">
+
+    <div id="toast-container" class="fixed top-5 right-5 z-[9999] flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- SIDEBAR -->
+    <aside id="sidebar" class="w-16 lg:w-64 bg-[#050b1d] border-r border-white/5 flex flex-col z-50 transition-all duration-300">
+        <div class="h-16 flex items-center justify-center lg:justify-start lg:px-6 border-b border-white/5">
+            <div class="w-8 h-8 rounded bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-lg">
+                <i class="fa-solid fa-infinity text-sm"></i>
+            </div>
+            <div class="hidden lg:block ml-3">
+                <h1 class="font-display font-bold text-white tracking-widest text-lg leading-none">GENESIS</h1>
+                <p class="text-[9px] font-mono text-cyan-500 mt-1">v22.4 // HYBRID UI</p>
+            </div>
+        </div>
+
+        <nav id="main-nav" class="hidden flex-1 py-6 space-y-2 px-2">
+            <button onclick="nav('dashboard')" id="nav-dashboard" class="nav-btn active w-full p-3 rounded-lg flex items-center lg:justify-start gap-3 text-slate-400 hover:bg-white/5 transition-all group">
+                <i class="fa-solid fa-gauge group-hover:scale-110 transition-transform"></i>
+                <span class="hidden lg:block font-mono text-xs">DASHBOARD</span>
+            </button>
+            <button onclick="nav('vault')" id="nav-vault" class="nav-btn w-full p-3 rounded-lg flex items-center lg:justify-start gap-3 text-slate-400 hover:bg-white/5 transition-all group">
+                <i class="fa-solid fa-vault group-hover:scale-110 transition-transform"></i>
+                <span class="hidden lg:block font-mono text-xs">SALES VAULT</span>
+            </button>
+            <button onclick="nav('architect')" id="nav-architect" class="nav-btn w-full p-3 rounded-lg flex items-center lg:justify-start gap-3 text-slate-400 hover:bg-white/5 transition-all group">
+                <i class="fa-solid fa-pen-nib group-hover:scale-110 transition-transform"></i>
+                <span class="hidden lg:block font-mono text-xs">ARCHITECT</span>
+            </button>
+            <button onclick="nav('warroom')" id="nav-warroom" class="nav-btn w-full p-3 rounded-lg flex items-center lg:justify-start gap-3 text-slate-400 hover:bg-white/5 transition-all group">
+                <i class="fa-solid fa-network-wired group-hover:scale-110 transition-transform"></i>
+                <span class="hidden lg:block font-mono text-xs">WAR ROOM</span>
+            </button>
+            <button onclick="nav('atom')" id="nav-atom" class="nav-btn w-full p-3 rounded-lg flex items-center lg:justify-start gap-3 text-slate-400 hover:bg-white/5 transition-all group">
+                <i class="fa-solid fa-microchip group-hover:scale-110 transition-transform"></i>
+                <span class="hidden lg:block font-mono text-xs">ATOM CORE</span>
+            </button>
+        </nav>
+
+        <div id="sidebar-footer" class="hidden p-4 border-t border-white/5 bg-black/20">
+            <button onclick="nav('settings')" id="nav-settings" class="w-full flex items-center lg:justify-start gap-3 text-slate-500 hover:text-cyan-400 transition-colors mb-3">
+                <i class="fa-solid fa-sliders"></i>
+                <span class="hidden lg:block font-mono text-[10px]">SYSTEM CONFIG</span>
+            </button>
+            <div class="hidden lg:flex items-center gap-2 px-1">
+                <div id="sys-dot" class="w-1.5 h-1.5 rounded-full bg-rose-500 shadow-[0_0_8px_currentColor]"></div>
+                <span id="sys-status" class="text-[9px] font-mono text-rose-500 uppercase">OFFLINE</span>
+            </div>
+            <button onclick="handleLogout()" class="mt-4 w-full text-[10px] font-mono text-rose-400 hover:text-rose-300 transition-colors hidden lg:block text-left uppercase">
+                <i class="fa-solid fa-power-off mr-2"></i>Terminate Session
+            </button>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+        <!-- Header -->
+        <header class="h-16 border-b border-white/5 flex items-center justify-between px-6 bg-[#020617]/80 backdrop-blur-md z-40">
+            <div class="flex items-center gap-4">
+                <h2 id="page-title" class="font-display font-bold text-white text-lg tracking-wide uppercase">Genesis Kernel</h2>
+                <div id="status-sync" class="hidden bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 text-[10px] font-mono flex items-center gap-2">
+                    <span class="w-1 h-1 bg-emerald-400 rounded-full animate-pulse"></span>
+                    <span id="blog-domain-text">SYNCED</span>
                 </div>
             </div>
-            <div id="user-info" class="hidden flex items-center gap-4 bg-white p-2 rounded-full shadow-sm border border-gray-100 pr-4">
-                <div class="w-10 h-10 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center font-bold" id="user-initial">U</div>
-                <span id="user-name" class="font-semibold text-sm">User</span>
-                <button onclick="showView('view-settings')" class="text-gray-400 hover:text-blue-600 transition">⚙️</button>
-                <button onclick="handleLogout()" class="text-red-500 text-xs font-bold hover:underline ml-2 uppercase tracking-wider">Logout</button>
+            <div class="flex items-center gap-6">
+                <div class="hidden md:flex flex-col items-end">
+                    <span class="text-[10px] font-mono text-slate-500 uppercase tracking-tighter">System Time</span>
+                    <span id="clock" class="text-xs font-mono text-cyan-400">00:00:00</span>
+                </div>
+                <div id="header-user" class="hidden flex items-center gap-3 border-l border-white/10 pl-6">
+                    <div class="w-8 h-8 rounded-full bg-cyan-500/20 border border-cyan-500/50 flex items-center justify-center text-cyan-400 font-bold text-xs" id="user-initial">?</div>
+                    <span id="user-name" class="text-xs font-mono text-slate-300 hidden lg:block">Operator</span>
+                </div>
             </div>
         </header>
 
-        <!-- Login -->
-        <section id="view-login" class="bg-white p-10 rounded-2xl shadow-xl max-w-md mx-auto border border-gray-100">
-            <div class="text-center mb-8">
-                <h2 class="text-2xl font-bold">Selamat Datang</h2>
-                <p class="text-gray-400 text-sm">Masukkan password akses Anda untuk mengelola postingan.</p>
-            </div>
-            <div class="space-y-5">
-                <input type="password" id="login-password" class="w-full rounded-xl border-gray-200 shadow-sm border p-3 focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="Password Akses">
-                <button onclick="handleLogin()" id="btn-login" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all transform hover:-translate-y-0.5">Masuk Sekarang</button>
-                <p class="text-center text-sm text-gray-500">Belum punya akses? <a href="#" onclick="showView('view-register')" class="text-blue-600 font-bold hover:underline">Daftar Legalitas</a></p>
-            </div>
-        </section>
+        <div class="flex-1 overflow-y-auto p-4 lg:p-8 relative custom-scrollbar">
 
-        <!-- Register -->
-        <section id="view-register" class="bg-white p-10 rounded-2xl shadow-xl max-w-md mx-auto hidden border border-gray-100">
-            <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Pendaftaran Legalitas</h2>
-            <form class="space-y-4" onsubmit="handleRegister(event)">
-                <input type="text" name="name" placeholder="Nama Lengkap / Instansi" required class="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-green-500 border-gray-200">
-                <textarea name="address" placeholder="Alamat Lengkap Sesuai Identitas" required class="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-green-500 border-gray-200" rows="2"></textarea>
-                <input type="tel" name="whatsapp" placeholder="Nomor WhatsApp Aktif" required class="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-green-500 border-gray-200">
-                <input type="password" name="password" placeholder="Buat Password Akses Baru" required class="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-green-500 border-gray-200">
-                <button type="submit" class="w-full bg-green-600 text-white font-bold py-3 rounded-xl shadow-lg shadow-green-100 hover:bg-green-700 transition">Selesaikan Pendaftaran</button>
-                <p class="text-center text-sm"><a href="#" onclick="showView('view-login')" class="text-blue-600 font-bold hover:underline">Kembali ke Login</a></p>
-            </form>
-        </section>
-
-        <!-- Settings -->
-        <section id="view-settings" class="bg-white p-10 rounded-2xl shadow-xl max-w-md mx-auto hidden border border-gray-100">
-            <h2 class="text-2xl font-bold mb-4 text-gray-800">Pengaturan AI</h2>
-            <p class="text-gray-500 text-sm mb-6">Kelola API Key Gemini Anda di sini. Data disimpan lokal di browser Anda.</p>
-            <div class="space-y-4">
-                    <div class="space-y-1">
-                        <label class="text-xs font-bold text-gray-500 uppercase tracking-widest block ml-1">Domain Blogspot</label>
-                        <input type="text" id="settings-blog-domain" placeholder="example.blogspot.com" class="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 border-gray-200">
+            <!-- VIEW: LOGIN -->
+            <div id="view-login" class="max-w-md mx-auto mt-20 space-y-6">
+                <div class="holo-panel p-10 rounded-2xl border border-white/10 shadow-2xl text-center">
+                    <div class="w-20 h-20 bg-cyan-500/10 border border-cyan-500/30 rounded-3xl flex items-center justify-center mx-auto mb-8 text-cyan-400 shadow-lg shadow-cyan-500/10">
+                        <i class="fa-solid fa-shield-halved text-3xl"></i>
                     </div>
-                <div class="space-y-1">
-                    <label class="text-xs font-bold text-gray-500 uppercase">Gemini API Keys</label>
-                    <textarea id="settings-gemini-keys" placeholder="key1, key2, key3" class="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 border-gray-200" rows="3"></textarea>
-                    <p class="text-[10px] text-gray-400 italic">Pisahkan dengan koma jika lebih dari satu untuk rotasi otomatis.</p>
-                </div>
-                <button onclick="saveSettings()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl shadow-lg hover:bg-blue-700 transition">Simpan Pengaturan</button>
-                <button onclick="showView('view-dashboard')" class="w-full text-gray-500 font-bold py-2 hover:underline">Kembali</button>
-            </div>
-        </section>
-
-        <!-- Dashboard -->
-        <section id="view-dashboard" class="hidden space-y-8">
-            <div class="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                <div>
-                    <h2 class="text-2xl font-black text-gray-800">Dashboard Anda</h2>
-                    <p class="text-gray-400 text-sm">Kelola semua barang dagangan Anda di sini.</p>
-                </div>
-                <button onclick="openPostForm()" class="bg-blue-600 text-white font-bold px-6 py-3 rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all flex items-center gap-2">
-                    <span class="text-xl">+</span> Post Baru
-                </button>
-            </div>
-
-            <div id="posts-list" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                <!-- Posts will appear here -->
-            </div>
-
-            <div id="empty-dashboard" class="hidden text-center py-20 bg-gray-100 rounded-3xl border-2 border-dashed border-gray-300">
-                <p class="text-gray-400 font-medium">Belum ada postingan. Mulai jualan sekarang!</p>
-            </div>
-        </section>
-
-        <!-- Post Form -->
-        <section id="view-post" class="bg-white p-10 rounded-2xl shadow-xl hidden max-w-2xl mx-auto border border-gray-100">
-            <div class="flex justify-between items-center mb-8">
-                <div>
-                    <h2 id="post-form-title" class="text-2xl font-bold text-gray-800">Buat Postingan</h2>
-                    <p class="text-gray-400 text-sm">Informasi barang Anda akan otomatis sinkron ke Blogger.</p>
-                </div>
-                <button onclick="showView('view-dashboard')" class="bg-gray-100 text-gray-500 p-2 rounded-full hover:bg-gray-200 transition">✕</button>
-            </div>
-            <form id="form-post" class="space-y-6" onsubmit="handlePost(event)">
-                <input type="hidden" name="jsonId" id="field-jsonId">
-                <input type="hidden" name="labels" id="field-labels">
-                <div class="space-y-1">
-                    <label class="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Judul Penjualan</label>
-                    <input type="text" name="title" id="field-title" placeholder="Contoh: Honda Vario 125 Bekas Mulus" maxlength="150" required class="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 border-gray-200">
-                </div>
-                <div class="grid grid-cols-2 gap-6">
-                    <div class="space-y-1">
-                        <label class="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Harga (IDR)</label>
-                        <input type="text" name="price" id="field-price" placeholder="Rp 15.000.000" required class="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 border-gray-200">
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Lokasi</label>
-                        <input type="text" name="location" id="field-location" placeholder="Kota/Kabupaten" required class="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 border-gray-200">
+                    <h3 class="text-2xl font-display font-bold text-white mb-2 uppercase tracking-widest">Access Protocol</h3>
+                    <p class="text-slate-500 text-xs font-mono mb-8 italic">Identify yourself to initialize system kernel.</p>
+                    <div class="space-y-4">
+                        <input type="password" id="login-password" class="input-gen w-full rounded-xl p-4 text-center tracking-[1em]" placeholder="********">
+                        <button onclick="handleLogin()" id="btn-login" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-mono font-bold py-4 rounded-xl shadow-lg transition-all uppercase text-xs tracking-widest">Initialize Sync</button>
+                        <p class="text-xs text-slate-500 font-mono">No clearance? <a href="#" onclick="showView('view-register')" class="text-cyan-500 hover:underline">Request Identity</a></p>
                     </div>
                 </div>
-                <div class="space-y-1">
-                    <div class="flex justify-between items-end px-1">
-                        <label class="text-xs font-bold text-gray-500 uppercase tracking-widest">Keterangan / Deskripsi</label>
-                        <button type="button" onclick="generateAI()" id="btn-ai" class="text-[10px] bg-purple-100 text-purple-700 px-3 py-1 rounded-lg font-black hover:bg-purple-200 transition flex items-center gap-1">
-                            ✨ GUNAKAN AI SEO
+            </div>
+
+            <!-- VIEW: REGISTER -->
+            <div id="view-register" class="hidden max-w-md mx-auto mt-10 space-y-6">
+                <div class="holo-panel p-10 rounded-2xl border border-white/10">
+                    <h3 class="text-xl font-display font-bold text-white mb-6 uppercase tracking-widest text-center">Identity Registration</h3>
+                    <form class="space-y-4" onsubmit="handleRegister(event)">
+                        <input type="text" name="name" placeholder="FULL NAME / ALIAS" required class="input-gen w-full rounded-lg p-3">
+                        <textarea name="address" placeholder="POSTAL ADDRESS / COORDINATES" required class="input-gen w-full rounded-lg p-3" rows="2"></textarea>
+                        <input type="tel" name="whatsapp" placeholder="COMMS FREQUENCY (WHATSAPP)" required class="input-gen w-full rounded-lg p-3">
+                        <input type="password" name="password" placeholder="ACCESS KEYCODE" required class="input-gen w-full rounded-lg p-3">
+                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-mono font-bold py-3 rounded-lg transition-all uppercase text-xs tracking-widest mt-4">Confirm Registration</button>
+                        <p class="text-center text-[10px] font-mono"><a href="#" onclick="showView('view-login')" class="text-slate-500 hover:text-cyan-500">Back to Access Terminal</a></p>
+                    </form>
+                </div>
+            </div>
+
+            <!-- VIEW: DASHBOARD -->
+            <div id="view-dashboard" class="hidden max-w-6xl mx-auto space-y-6">
+                <div class="holo-panel p-8 rounded-2xl flex items-center justify-between relative overflow-hidden group">
+                    <div class="relative z-10">
+                        <h3 class="text-2xl font-display font-bold text-white mb-2">Welcome, <span id="dash-user">Operator</span>.</h3>
+                        <p class="text-slate-400 text-sm max-w-md">Kernel v22.4 Hybrid is fully synchronized. Ready to engage modules.</p>
+                        <div class="flex gap-4 mt-6">
+                            <button onclick="nav('vault')" class="px-6 py-2 bg-cyan-500/10 border border-cyan-500/50 text-cyan-400 hover:bg-cyan-500 hover:text-white rounded text-[10px] font-mono font-bold tracking-widest transition-all">MANAGE SALES</button>
+                            <button onclick="nav('warroom')" class="px-6 py-2 bg-amber-500/10 border border-amber-500/50 text-amber-400 hover:bg-amber-500 hover:text-white rounded text-[10px] font-mono font-bold tracking-widest transition-all">START IDEATION</button>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-robot text-8xl absolute -right-4 -bottom-4 text-cyan-500/5 rotate-12 group-hover:scale-110 transition-transform"></i>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="holo-panel p-5 rounded-xl border-l-2 border-cyan-500">
+                        <p class="text-[10px] font-mono text-slate-500 uppercase">Sales Inventory</p>
+                        <div class="text-3xl font-display font-bold text-white mt-1" id="dash-sales-count">0</div>
+                    </div>
+                    <div class="holo-panel p-5 rounded-xl border-l-2 border-emerald-500">
+                        <p class="text-[10px] font-mono text-slate-500 uppercase">Published SEO</p>
+                        <div class="text-3xl font-display font-bold text-white mt-1" id="dash-produced">0</div>
+                    </div>
+                    <div class="holo-panel p-5 rounded-xl border-l-2 border-amber-500">
+                        <p class="text-[10px] font-mono text-slate-500 uppercase">Queue Depth</p>
+                        <div class="text-3xl font-display font-bold text-white mt-1" id="dash-queue">0</div>
+                    </div>
+                    <div class="holo-panel p-5 rounded-xl border-l-2 border-blue-500">
+                        <p class="text-[10px] font-mono text-slate-500 uppercase">System Status</p>
+                        <div class="text-xs font-mono text-emerald-400 mt-2 font-bold tracking-widest">NOMINAL</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: SALES VAULT (The CRUD Dashboard) -->
+            <div id="view-vault" class="hidden max-w-6xl mx-auto space-y-6">
+                <div class="flex justify-between items-center bg-white/5 p-6 rounded-2xl border border-white/5">
+                    <div>
+                        <h3 class="text-xl font-display font-bold text-white">Inventory Management</h3>
+                        <p class="text-slate-500 text-xs font-mono">Individual sales posts synchronized with Blogger.</p>
+                    </div>
+                    <button onclick="openPostForm()" class="bg-cyan-600 hover:bg-cyan-500 text-white font-mono font-bold px-6 py-3 rounded-xl shadow-lg transition-all flex items-center gap-2 text-xs tracking-widest">
+                        <i class="fa-solid fa-plus"></i> NEW DEPLOYMENT
+                    </button>
+                </div>
+
+                <div id="posts-list" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    <!-- Posts Loader -->
+                    <div class="col-span-full py-20 text-center font-mono text-xs text-slate-600 animate-pulse">Scanning database...</div>
+                </div>
+
+                <div id="empty-dashboard" class="hidden text-center py-20 bg-white/5 rounded-3xl border border-dashed border-white/10">
+                    <p class="text-slate-500 font-mono text-xs uppercase tracking-widest">No assets found in vault.</p>
+                </div>
+            </div>
+
+            <!-- VIEW: POST FORM (Sales) -->
+            <div id="view-post" class="hidden max-w-3xl mx-auto space-y-6 mb-20">
+                <div class="holo-panel p-8 rounded-2xl border border-white/10 relative">
+                    <button onclick="nav('vault')" class="absolute top-8 right-8 text-slate-500 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+                    <h3 id="post-form-title" class="text-2xl font-display font-bold text-white mb-2">New Asset Deployment</h3>
+                    <p class="text-slate-500 text-xs font-mono mb-8 uppercase tracking-widest">Blogger Synchronization Protocol</p>
+
+                    <form id="form-post" class="grid grid-cols-1 md:grid-cols-2 gap-6" onsubmit="handlePost(event)">
+                        <input type="hidden" name="jsonId" id="field-jsonId">
+                        <input type="hidden" name="labels" id="field-labels">
+
+                        <div class="md:col-span-2 space-y-2">
+                            <label class="text-[10px] font-mono text-slate-500 uppercase tracking-widest ml-1">Asset Title</label>
+                            <input type="text" name="title" id="field-title" placeholder="EX: HONDA VARIO 125 PRESTIGE" maxlength="150" required class="input-gen w-full rounded-lg p-3">
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-mono text-slate-500 uppercase tracking-widest ml-1">Price (IDR)</label>
+                            <input type="text" name="price" id="field-price" placeholder="RP 15.000.000" required class="input-gen w-full rounded-lg p-3">
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-mono text-slate-500 uppercase tracking-widest ml-1">Location Vector</label>
+                            <input type="text" name="location" id="field-location" placeholder="CITY / REGION" required class="input-gen w-full rounded-lg p-3">
+                        </div>
+
+                        <div class="md:col-span-2 space-y-2">
+                            <div class="flex justify-between items-end px-1">
+                                <label class="text-[10px] font-mono text-slate-500 uppercase tracking-widest">Asset Specification</label>
+                                <button type="button" onclick="generateAI()" id="btn-ai" class="text-[9px] bg-cyan-500/10 text-cyan-400 px-3 py-1 rounded border border-cyan-500/30 font-bold hover:bg-cyan-500 hover:text-white transition flex items-center gap-2">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i> AI SYNTHESIZE
+                                </button>
+                            </div>
+                            <textarea name="description" id="field-description" placeholder="DETAILED DESCRIPTION..." required class="input-gen w-full rounded-lg p-3" rows="4"></textarea>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-mono text-slate-500 uppercase tracking-widest ml-1">Visual Capture</label>
+                            <input type="file" id="post-photo" accept="image/*" class="input-gen w-full rounded-lg p-2 text-[10px] file:bg-cyan-500/10 file:text-cyan-400 file:border-0 file:rounded file:px-2 file:py-1 file:mr-2">
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-mono text-slate-500 uppercase tracking-widest ml-1">Asset Status</label>
+                            <select name="status" id="field-status" class="input-gen w-full rounded-lg p-3">
+                                <option value="Aktif">ACTIVE / AVAILABLE</option>
+                                <option value="Terjual">SOLD / EXPIRED</option>
+                            </select>
+                        </div>
+
+                        <div class="md:col-span-2 space-y-2">
+                            <label class="text-[10px] font-mono text-slate-500 uppercase tracking-widest ml-1">SEO Alt-Text (Meta)</label>
+                            <input type="text" name="alt_text" id="field-alt_text" required class="input-gen w-full rounded-lg p-3">
+                        </div>
+
+                        <div class="md:col-span-2 pt-4">
+                            <button type="submit" id="btn-submit-post" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-mono font-bold py-4 rounded-xl shadow-lg shadow-cyan-500/10 transition-all flex items-center justify-center gap-3 text-xs tracking-[0.2em]">
+                                <span id="btn-text">INITIALIZE DEPLOYMENT</span>
+                                <div id="loader-post" class="hidden animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- VIEW: ARCHITECT (Manual AI Write) -->
+            <div id="view-architect" class="hidden max-w-6xl mx-auto h-full flex flex-col space-y-4">
+                <div class="flex gap-4">
+                    <input type="text" id="arc-topic" class="input-gen flex-1 rounded-lg px-4 py-3" placeholder="CORE TOPIC (E.G. JASA BUANG PUING SEMARANG)">
+                    <button onclick="runArchitect()" id="btn-arc" class="px-8 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg font-mono font-bold text-xs tracking-widest transition-all">
+                        SYNTHESIZE
+                    </button>
+                </div>
+                <div class="flex-1 grid lg:grid-cols-4 gap-6 overflow-hidden min-h-[500px]">
+                    <div class="lg:col-span-3 holo-panel rounded-xl flex flex-col overflow-hidden relative border border-white/5">
+                        <div id="arc-overlay" class="absolute inset-0 z-20 bg-void/80 backdrop-blur-sm flex flex-col items-center justify-center hidden">
+                            <i class="fa-solid fa-brain text-5xl text-cyan-500 animate-pulse"></i>
+                            <p class="mt-4 font-mono text-xs text-cyan-400">NEURAL PROCESSING...</p>
+                        </div>
+                        <div id="arc-editor" class="flex-1 p-8 overflow-y-auto prose prose-invert prose-sm max-w-none font-sans outline-none" contenteditable="true">
+                            <p class="text-slate-600 font-mono text-sm tracking-widest">Awaiting input directives...</p>
+                        </div>
+                    </div>
+                    <div class="holo-panel rounded-xl p-5 space-y-4 h-fit border border-white/5">
+                        <h4 class="text-[10px] font-mono text-slate-500 uppercase tracking-widest border-b border-white/5 pb-2">Synthesis Tools</h4>
+                        <button onclick="navigator.clipboard.writeText(document.getElementById('arc-editor').innerText); toast('Matrix Copied', 'success')" class="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-[10px] font-mono transition-colors uppercase tracking-widest">Copy to Matrix</button>
+                        <button onclick="document.getElementById('arc-editor').innerHTML=''" class="w-full py-3 border border-white/5 hover:bg-white/5 text-slate-500 rounded-lg text-[10px] font-mono transition-colors uppercase tracking-widest">Clear Buffer</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: WAR ROOM (Tuyul Ideation) -->
+            <div id="view-warroom" class="hidden max-w-6xl mx-auto space-y-6">
+                <div class="grid lg:grid-cols-2 gap-8">
+                    <div class="holo-panel p-8 rounded-xl space-y-6 border border-white/10">
+                        <h3 class="font-display font-bold text-white text-xl uppercase tracking-widest flex items-center gap-3">
+                            <i class="fa-solid fa-robot text-cyan-500"></i> TUYUL: NEURAL IDEATION
+                        </h3>
+                        <div class="p-5 bg-cyan-500/5 border border-cyan-500/10 rounded-xl space-y-4">
+                            <label class="text-[10px] font-mono text-cyan-500 uppercase tracking-widest block">SEED KEYWORD / ROOT</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="wr-seed" class="input-gen flex-1 rounded-lg px-4" placeholder="EX: SERVICE AC">
+                                <button onclick="runTuyul()" id="btn-tuyul" class="px-6 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg font-mono font-bold text-[10px] tracking-widest transition-all">IDEATE</button>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-mono text-slate-500 uppercase tracking-widest ml-1">Vector A (Services)</label>
+                                <textarea id="wr-a" class="input-gen w-full h-40 rounded-xl p-4 text-xs leading-relaxed" placeholder="Line-separated services..."></textarea>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-mono text-slate-500 uppercase tracking-widest ml-1">Vector B (Locations)</label>
+                                <textarea id="wr-b" class="input-gen w-full h-40 rounded-xl p-4 text-xs leading-relaxed" placeholder="Line-separated locations..."></textarea>
+                            </div>
+                        </div>
+                        <button onclick="buildQueue()" class="w-full py-5 bg-amber-600/10 border border-amber-600/30 text-amber-500 hover:bg-amber-600 hover:text-white rounded-xl font-mono font-bold text-xs tracking-[0.3em] transition-all">
+                            CONSTRUCT ATTACK VECTORS
                         </button>
                     </div>
-                    <textarea name="description" id="field-description" placeholder="Jelaskan kondisi barang secara lengkap..." required class="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 border-gray-200" rows="4"></textarea>
-                </div>
-                <div class="grid grid-cols-2 gap-6">
-                    <div id="photo-upload-area" class="space-y-1">
-                        <label class="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Unggah Foto</label>
-                        <input type="file" id="post-photo" accept="image/*" class="w-full text-sm mt-1 file:bg-blue-50 file:text-blue-700 file:border-0 file:py-2 file:px-4 file:rounded-lg hover:file:bg-blue-100 cursor-pointer">
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Status Barang</label>
-                        <select name="status" id="field-status" class="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 border-gray-200 bg-white">
-                            <option value="Aktif">Aktif</option>
-                            <option value="Terjual">Terjual</option>
-                        </select>
+                    <div class="holo-panel p-8 rounded-xl flex flex-col h-[600px] border border-white/10">
+                        <div class="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
+                            <span class="text-[10px] font-mono text-slate-500 uppercase tracking-[0.2em]">Deployment Queue Buffer</span>
+                            <span id="queue-count" class="bg-cyan-500/10 text-cyan-400 px-3 py-1 rounded text-[10px] font-mono border border-cyan-500/20">0 UNITS</span>
+                        </div>
+                        <div id="queue-list" class="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+                            <div class="text-center text-slate-600 text-[10px] font-mono py-20 tracking-widest">SYSTEM STANDBY: NO DIRECTIVES LOADED.</div>
+                        </div>
                     </div>
                 </div>
-                <div class="space-y-1">
-                    <label class="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Alt Text (SEO)</label>
-                    <input type="text" name="alt_text" id="field-alt_text" placeholder="Deskripsi singkat isi gambar" required class="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 border-gray-200">
-                </div>
-                <button type="submit" id="btn-submit-post" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl shadow-xl shadow-blue-100 hover:bg-blue-700 transition flex items-center justify-center gap-3">
-                    <span id="btn-text">Sinkronkan ke Blogger</span>
-                    <div id="loader" class="hidden animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
-                </button>
-            </form>
-        </section>
+            </div>
 
-        <!-- Status Message -->
-        <div id="status-msg" class="fixed bottom-10 right-10 left-10 md:left-auto md:w-80 p-4 rounded-2xl hidden shadow-2xl text-center font-bold z-50 animate-bounce"></div>
-    </div>
+            <!-- VIEW: ATOM CORE (Automation Loop) -->
+            <div id="view-atom" class="hidden max-w-6xl mx-auto space-y-6 h-full flex flex-col">
+                <div class="grid lg:grid-cols-4 gap-6">
+                    <div class="holo-panel p-8 rounded-xl space-y-8 h-fit border border-white/10">
+                        <div>
+                            <label class="text-[10px] font-mono text-slate-500 uppercase tracking-[0.2em] block mb-2">Core Kernel Status</label>
+                            <div id="core-status" class="text-3xl font-display font-bold text-slate-600 tracking-tighter">STANDBY</div>
+                        </div>
+                        <div class="space-y-4">
+                            <label class="text-[10px] font-mono text-slate-500 uppercase tracking-[0.2em] ml-1">Synchronization Delay</label>
+                            <div class="flex items-center gap-4">
+                                <input type="range" id="atom-delay" min="5" max="120" value="10" class="flex-1 h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-500">
+                                <span id="delay-val" class="font-mono text-xs text-cyan-400 w-10">10s</span>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 gap-3">
+                            <button onclick="startAtom()" id="btn-start" class="py-5 bg-cyan-600/10 border border-cyan-500/40 text-cyan-400 hover:bg-cyan-500 hover:text-white rounded-xl font-mono font-bold text-xs tracking-[0.3em] transition-all">INITIATE OPERATIONS</button>
+                            <button onclick="stopAtom()" id="btn-stop" class="py-3 bg-rose-600/10 border border-rose-500/30 text-rose-500 hover:bg-rose-600 hover:text-white rounded-xl font-mono font-bold text-[10px] tracking-widest transition-all" disabled>EMERGENCY ABORT</button>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-3 flex flex-col h-[600px] holo-panel rounded-xl overflow-hidden border border-white/10">
+                        <div class="bg-black/40 px-6 py-3 border-b border-white/5 flex justify-between items-center">
+                            <span class="text-[10px] font-mono text-cyan-500 uppercase tracking-widest">Genesis_Kernel_v22.4.log</span>
+                            <button onclick="exportLog()" class="text-[9px] font-mono text-slate-500 hover:text-white transition-colors">DUMP_LOG</button>
+                        </div>
+                        <div id="terminal" class="flex-1 bg-[#02040a] p-6 overflow-y-auto font-mono text-[11px] leading-relaxed space-y-1 custom-scrollbar">
+                            <div class="text-cyan-900">> system_init() ... ok</div>
+                            <div class="text-cyan-900">> awaiting_operator_directives ...</div>
+                        </div>
+                        <div class="p-6 bg-black/40 border-t border-white/5">
+                            <div class="flex justify-between items-end mb-2">
+                                <span class="text-[9px] font-mono text-slate-500 uppercase">Synchronization Progress</span>
+                                <span id="progress-text" class="text-[9px] font-mono text-cyan-500">0%</span>
+                            </div>
+                            <div class="w-full h-1 bg-slate-900 rounded-full overflow-hidden">
+                                <div id="progress-bar" class="h-full bg-cyan-500 w-0 transition-all duration-500 shadow-[0_0_10px_#06b6d4]"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: SETTINGS -->
+            <div id="view-settings" class="hidden max-w-2xl mx-auto space-y-6">
+                <div class="holo-panel p-10 rounded-2xl border border-white/10 shadow-2xl">
+                    <h3 class="text-2xl font-display font-bold text-white mb-2 uppercase tracking-widest">System Configuration</h3>
+                    <p class="text-slate-500 text-xs font-mono mb-10 italic">Modify kernel parameters. Data persists in local encryption.</p>
+                    <div class="space-y-8">
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-mono text-cyan-500 uppercase tracking-widest ml-1">Target Blogspot Domain</label>
+                            <input type="text" id="settings-blog-domain" placeholder="example.blogspot.com" class="input-gen w-full rounded-xl p-4">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-mono text-cyan-500 uppercase tracking-widest ml-1">Bridge Interface (GAS URL)</label>
+                            <input type="text" id="settings-gas-url" placeholder="https://script.google.com/..." class="input-gen w-full rounded-xl p-4">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-mono text-cyan-500 uppercase tracking-widest ml-1">Gemini Master Keys (Multi-Key Rotation)</label>
+                            <textarea id="settings-gemini-keys" placeholder="AIza... (One per line)" class="input-gen w-full h-32 rounded-xl p-4 leading-relaxed"></textarea>
+                            <p class="text-[10px] text-slate-600 italic">Load multiple keys for high-volume automated publishing.</p>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-mono text-cyan-500 uppercase tracking-widest ml-1">Blogger Blog ID (Post Target)</label>
+                            <input type="text" id="settings-blog-id" placeholder="1234567890..." class="input-gen w-full rounded-xl p-4">
+                        </div>
+                        <div class="pt-6">
+                            <button onclick="saveSettings()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-mono font-bold py-4 rounded-xl shadow-lg transition-all uppercase text-xs tracking-widest">Commit Changes to Local Storage</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
 
     <script>
-        const GAS_URL = "YOUR_APPS_SCRIPT_URL";
-        let isEditMode = false;
-        let blogFeed = { labels: [] };
+        const STORAGE_KEY = 'OMNI_GENESIS_V22';
+        let STATE = {
+            user: null,
+            pass: '',
+            config: { keys: [], bridge: '', blogDomain: '', blogId: '' },
+            queue: [],
+            running: false,
+            stop: false,
+            produced: 0,
+            blogFeed: { labels: [] }
+        };
 
-        function showView(id) {
-            document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
-            document.getElementById(id).classList.remove('hidden');
-            if (id === 'view-dashboard') {
-                document.getElementById('user-info').classList.remove('hidden');
-                loadPosts();
-            } else if (id === 'view-login' || id === 'view-register') {
-                document.getElementById('user-info').classList.add('hidden');
+        // --- CORE INITIALIZATION ---
+        window.onload = () => {
+            loadPersistence();
+            initClock();
+            document.getElementById('atom-delay').addEventListener('input', (e) => document.getElementById('delay-val').innerText = e.target.value + 's');
+
+            if(STATE.pass) {
+                initializeSession();
+            } else {
+                showView('view-login');
+            }
+        };
+
+        function loadPersistence() {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if(raw) {
+                try {
+                    const data = JSON.parse(decodeURIComponent(escape(atob(raw))));
+                    STATE.pass = data.pass || '';
+                    STATE.user = data.user || null;
+                    STATE.config = data.config || { keys: [], bridge: '', blogDomain: '', blogId: '' };
+                    STATE.produced = data.produced || 0;
+
+                    // Populate settings fields
+                    document.getElementById('settings-gemini-keys').value = STATE.config.keys.join('\n');
+                    document.getElementById('settings-gas-url').value = STATE.config.bridge;
+                    document.getElementById('settings-blog-domain').value = STATE.config.blogDomain;
+                    document.getElementById('settings-blog-id').value = STATE.config.blogId;
+
+                    document.getElementById('dash-produced').innerText = STATE.produced;
+                } catch(e) { console.error("Persistence Corruption", e); }
             }
         }
 
-        function showStatus(msg, err = false) {
-            const el = document.getElementById('status-msg');
-            el.innerText = msg;
-            el.className = `fixed bottom-10 right-10 left-10 md:left-auto md:w-80 p-4 rounded-2xl shadow-2xl text-center font-bold z-50 ${err ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}`;
-            el.classList.remove('hidden');
-            setTimeout(() => el.classList.add('hidden'), 4000);
+        function savePersistence() {
+            const data = { pass: STATE.pass, user: STATE.user, config: STATE.config, produced: STATE.produced };
+            const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+            localStorage.setItem(STORAGE_KEY, b64);
         }
 
+        function initializeSession() {
+            document.getElementById('main-nav').classList.remove('hidden');
+            document.getElementById('sidebar-footer').classList.remove('hidden');
+            document.getElementById('header-user').classList.remove('hidden');
+            document.getElementById('user-name').innerText = STATE.user;
+            document.getElementById('dash-user').innerText = STATE.user;
+            document.getElementById('user-initial').innerText = STATE.user.charAt(0).toUpperCase();
+            checkHealth();
+            syncFeed();
+            nav('dashboard');
+        }
+
+        // --- NAVIGATION ---
+        function showView(id) {
+            document.querySelectorAll('main > div > div').forEach(v => v.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        window.nav = (view) => {
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            const btn = document.getElementById(`nav-${view}`);
+            if(btn) btn.classList.add('active');
+
+            document.getElementById('page-title').innerText = view.replace('vault', 'sales vault').toUpperCase();
+            showView(`view-${view}`);
+
+            if(view === 'vault') loadVaultPosts();
+        };
+
+        // --- AUTH PROTOCOLS ---
         async function handleLogin() {
             const password = document.getElementById('login-password').value;
-            if (!password) return showStatus('Masukkan password!', true);
-            const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'login', password }) });
-            const result = await res.json();
-            if (result.success) {
-                localStorage.setItem('omnipost_pass', password);
-                localStorage.setItem('omnipost_user', result.name);
-                document.getElementById('user-name').innerText = result.name;
-                document.getElementById('user-initial').innerText = result.name.charAt(0);
-                showView('view-dashboard');
-            } else showStatus(result.message, true);
-        }
+            if(!password) return toast('ACCESS KEYCODE REQUIRED', 'error');
+            if(!STATE.config.bridge) return toast('BRIDGE NOT CONFIGURED. CHECK SYSTEM CONFIG.', 'error');
 
-        function handleLogout() {
-            localStorage.clear();
-            showView('view-login');
+            try {
+                const res = await fetch(STATE.config.bridge, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'login', password })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    STATE.pass = password;
+                    STATE.user = result.name;
+                    savePersistence();
+                    initializeSession();
+                    toast(`Welcome back, ${result.name}`, 'success');
+                } else toast(result.message, 'error');
+            } catch(e) { toast('COMMUNICATION ERROR: ' + e.message, 'error'); }
         }
 
         async function handleRegister(e) {
             e.preventDefault();
+            if(!STATE.config.bridge) return toast('BRIDGE NOT CONFIGURED', 'error');
+
             const data = Object.fromEntries(new FormData(e.target));
             data.action = 'register';
-            const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(data) });
-            const result = await res.json();
-            if (result.success) { showStatus('Pendaftaran Sukses!'); showView('view-login'); }
-            else showStatus(result.message, true);
+            try {
+                const res = await fetch(STATE.config.bridge, { method: 'POST', body: JSON.stringify(data) });
+                const result = await res.json();
+                if (result.success) {
+                    toast('IDENTITY REGISTERED', 'success');
+                    showView('view-login');
+                } else toast(result.message, 'error');
+            } catch(e) { toast('REGISTRATION ERROR', 'error'); }
         }
 
-        async function loadPosts() {
-            const password = localStorage.getItem('omnipost_pass');
-            const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getPosts', password }) });
-            const result = await res.json();
-            const list = document.getElementById('posts-list');
-            const empty = document.getElementById('empty-dashboard');
-
-            if (result.posts.length === 0) {
-                list.innerHTML = "";
-                empty.classList.remove('hidden');
-                return;
-            }
-
-            empty.classList.add('hidden');
-            list.innerHTML = result.posts.map(p => {
-                const pJson = JSON.stringify(p).replace(/'/g, "&apos;");
-                const statusColor = p.status === 'Terjual' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600';
-                const thumb = p.photoData || 'https://via.placeholder.com/300x200?text=No+Image';
-
-                return `
-                <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden group hover:shadow-xl transition-all duration-300">
-                    <div class="h-48 overflow-hidden relative">
-                        <img src="${thumb}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
-                        <span class="absolute top-4 left-4 ${statusColor} text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-sm">${p.status}</span>
-                    </div>
-                    <div class="p-6">
-                        <h3 class="font-bold text-lg mb-1 truncate">${p.title}</h3>
-                        <p class="text-blue-600 font-black text-sm mb-4">${p.price}</p>
-                        <div class="flex items-center gap-3 border-t pt-4">
-                            <a href="${p.blogUrl}" target="_blank" class="flex-1 bg-gray-50 text-gray-700 text-center py-2 rounded-xl text-xs font-bold hover:bg-gray-100 transition">Lihat Blog</a>
-                            <button onclick='editPost(${pJson})' class="flex-1 bg-blue-50 text-blue-700 py-2 rounded-xl text-xs font-bold hover:bg-blue-100 transition">Edit</button>
-                            <button onclick="handleDelete('${p.jsonId}')" class="p-2 text-red-400 hover:text-red-600 transition">🗑</button>
-                        </div>
-                    </div>
-                </div>
-            `}).join('');
+        function handleLogout() {
+            if(!confirm("TERMINATE SESSION?")) return;
+            STATE.pass = ''; STATE.user = null;
+            savePersistence();
+            location.reload();
         }
 
-        async function handleDelete(jsonId) {
-            if (!confirm('Hapus postingan ini secara permanen?')) return;
-            const password = localStorage.getItem('omnipost_pass');
-            const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'deletePost', password, jsonId }) });
-            const result = await res.json();
-            if (result.success) { showStatus('Terhapus!'); loadPosts(); }
-            else showStatus('Gagal menghapus.', true);
-        }
-
-        function openPostForm() {
-            isEditMode = false;
-            document.getElementById('post-form-title').innerText = "Buat Postingan Baru";
-            document.getElementById('form-post').reset();
-            document.getElementById('photo-upload-area').classList.remove('hidden');
-            document.getElementById('btn-text').innerText = 'Sinkronkan ke Blogger';
-            showView('view-post');
-        }
-
-        function editPost(p) {
-            isEditMode = true;
-            document.getElementById('post-form-title').innerText = "Edit Postingan";
-            document.getElementById('field-jsonId').value = p.jsonId;
-            document.getElementById('field-title').value = p.title;
-            document.getElementById('field-price').value = p.price;
-            document.getElementById('field-location').value = p.location;
-            document.getElementById('field-description').value = p.description;
-            document.getElementById('field-alt_text').value = p.altText || "";
-            document.getElementById('field-status').value = p.status || "Aktif";
-            document.getElementById('photo-upload-area').classList.remove('hidden');
-            document.getElementById('btn-text').innerText = 'Simpan Perubahan';
-            showView('view-post');
-        }
-
+        // --- SETTINGS ---
         function saveSettings() {
-            const keys = document.getElementById('settings-gemini-keys').value;
-            const domain = document.getElementById('settings-blog-domain').value;
-            localStorage.setItem('omnipost_gemini_keys', keys);
-            localStorage.setItem('omnipost_blog_domain', domain);
-            showStatus('Pengaturan Tersimpan!');
+            STATE.config = {
+                keys: document.getElementById('settings-gemini-keys').value.split('\n').map(k=>k.trim()).filter(k=>k.length > 10),
+                bridge: document.getElementById('settings-gas-url').value.trim(),
+                blogDomain: document.getElementById('settings-blog-domain').value.trim(),
+                blogId: document.getElementById('settings-blog-id').value.trim()
+            };
+            savePersistence();
+            toast('CONFIGURATION COMMITTED', 'success');
+            checkHealth();
             syncFeed();
-            showView('view-dashboard');
+            if(STATE.pass) nav('dashboard');
         }
 
+        function checkHealth() {
+            const ok = STATE.config.keys.length > 0 && STATE.config.bridge && STATE.config.blogId;
+            const status = document.getElementById('sys-status');
+            const dot = document.getElementById('sys-dot');
+            status.innerText = ok ? "ONLINE" : "OFFLINE";
+            status.className = `text-[9px] font-mono ${ok ? 'text-emerald-500' : 'text-rose-500'}`;
+            dot.className = `w-1.5 h-1.5 rounded-full ${ok ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-rose-500 shadow-[0_0_8px_#f43f5e]'}`;
+        }
+
+        // --- BLOGGER FEED SYNC ---
         async function syncFeed() {
-            const domain = localStorage.getItem('omnipost_blog_domain');
+            const domain = STATE.config.blogDomain;
             if (!domain) return;
 
             const cleanDomain = domain.trim().replace(/^https?:\/\//, '').split('/')[0];
@@ -304,30 +588,141 @@
                 const entries = data.feed.entry || [];
                 const labels = new Set();
                 entries.forEach(e => e.category && e.category.forEach(c => labels.add(c.term)));
-                blogFeed.labels = Array.from(labels).sort();
+                STATE.blogFeed.labels = Array.from(labels).sort();
 
                 document.getElementById('status-sync').classList.remove('hidden');
-                document.getElementById('blog-domain-text').innerText = cleanDomain;
-
+                document.getElementById('blog-domain-text').innerText = cleanDomain.toUpperCase();
                 delete window[cb]; s.remove();
             };
             document.body.appendChild(s);
         }
 
-        async function callGemini(prompt) {
-            const keysStr = localStorage.getItem('omnipost_gemini_keys') || "";
-            const keys = keysStr.split(",").map(k => k.trim()).filter(k => k !== "");
-            if (keys.length === 0) throw new Error("API Key Gemini belum diatur di menu Pengaturan ⚙️");
+        // --- SALES VAULT LOGIC ---
+        let isEditMode = false;
+        async function loadVaultPosts() {
+            const list = document.getElementById('posts-list');
+            const empty = document.getElementById('empty-dashboard');
 
+            try {
+                const res = await fetch(STATE.config.bridge, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'getPosts', password: STATE.pass })
+                });
+                const result = await res.json();
+
+                document.getElementById('dash-sales-count').innerText = result.posts.length;
+
+                if (result.posts.length === 0) {
+                    list.innerHTML = "";
+                    empty.classList.remove('hidden');
+                    return;
+                }
+
+                empty.classList.add('hidden');
+                list.innerHTML = result.posts.map(p => {
+                    const pJson = JSON.stringify(p).replace(/'/g, "&apos;");
+                    const statusColor = p.status === 'Terjual' ? 'bg-rose-500/10 text-rose-500 border-rose-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+                    const thumb = p.photoData || 'https://via.placeholder.com/300x200?text=NO+IMAGE';
+
+                    return `
+                    <div class="holo-panel rounded-2xl border border-white/5 overflow-hidden group hover:border-cyan-500/30 transition-all duration-500">
+                        <div class="h-40 overflow-hidden relative">
+                            <img src="${thumb}" class="w-full h-full object-cover group-hover:scale-110 transition duration-700 opacity-60 group-hover:opacity-100">
+                            <span class="absolute top-3 left-3 border ${statusColor} text-[8px] font-mono font-bold uppercase tracking-widest px-2 py-0.5 rounded shadow-lg backdrop-blur-md">${p.status}</span>
+                        </div>
+                        <div class="p-5 space-y-3">
+                            <h3 class="font-display font-bold text-white text-sm truncate uppercase tracking-tight">${p.title}</h3>
+                            <div class="flex justify-between items-center">
+                                <span class="text-cyan-400 font-mono text-xs font-bold">${p.price}</span>
+                                <span class="text-[9px] font-mono text-slate-500 uppercase">${p.location}</span>
+                            </div>
+                            <div class="flex items-center gap-2 pt-3 border-t border-white/5">
+                                <button onclick='editPost(${pJson})' class="flex-1 bg-white/5 hover:bg-cyan-500 hover:text-white py-2 rounded text-[9px] font-mono font-bold transition-all text-slate-400 uppercase tracking-widest">EDIT</button>
+                                <a href="${p.blogUrl}" target="_blank" class="px-3 py-2 bg-white/5 hover:bg-white/10 rounded text-slate-500 transition-colors"><i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></a>
+                                <button onclick="handleDelete('${p.jsonId}')" class="p-2 text-slate-600 hover:text-rose-500 transition-colors"><i class="fa-solid fa-trash-can text-[10px]"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                `}).join('');
+            } catch(e) { list.innerHTML = `<div class="col-span-full text-center text-rose-500 font-mono text-xs">DATABASE SYNC ERROR</div>`; }
+        }
+
+        function openPostForm() {
+            isEditMode = false;
+            document.getElementById('post-form-title').innerText = "Asset Deployment";
+            document.getElementById('btn-text').innerText = "INITIALIZE DEPLOYMENT";
+            document.getElementById('form-post').reset();
+            nav('post');
+        }
+
+        function editPost(p) {
+            isEditMode = true;
+            document.getElementById('post-form-title').innerText = "Update Asset Data";
+            document.getElementById('btn-text').innerText = "COMMIT UPDATES";
+            document.getElementById('field-jsonId').value = p.jsonId;
+            document.getElementById('field-title').value = p.title;
+            document.getElementById('field-price').value = p.price;
+            document.getElementById('field-location').value = p.location;
+            document.getElementById('field-description').value = p.description;
+            document.getElementById('field-alt_text').value = p.altText || "";
+            document.getElementById('field-status').value = p.status || "Aktif";
+            document.getElementById('field-labels').value = JSON.stringify(p.labels || []);
+            nav('post');
+        }
+
+        async function handlePost(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-submit-post');
+            const loader = document.getElementById('loader-post');
+            btn.disabled = true; loader.classList.remove('hidden');
+
+            const data = Object.fromEntries(new FormData(e.target));
+            data.password = STATE.pass;
+            data.action = isEditMode ? 'updatePost' : 'createPost';
+
+            const file = document.getElementById('post-photo').files[0];
+            if (file) data.photoData = await compressImage(file);
+            if (!isEditMode) data.jsonId = 'OP-' + Date.now();
+            if (data.labels) try { data.labels = JSON.parse(data.labels); } catch(e) { data.labels = []; }
+
+            try {
+                const res = await fetch(STATE.config.bridge, { method: 'POST', body: JSON.stringify(data) });
+                const result = await res.json();
+                if (result.success) {
+                    toast('VAULT SYNC SUCCESSFUL', 'success');
+                    nav('vault');
+                } else toast(result.message, 'error');
+            } catch (err) { toast('VAULT CONNECTION FAILED', 'error'); }
+            finally { btn.disabled = false; loader.classList.add('hidden'); }
+        }
+
+        async function handleDelete(jsonId) {
+            if (!confirm('EXECUTE ASSET PERMANENT REMOVAL?')) return;
+            try {
+                const res = await fetch(STATE.config.bridge, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'deletePost', password: STATE.pass, jsonId })
+                });
+                const result = await res.json();
+                if (result.success) { toast('ASSET REMOVED', 'success'); loadVaultPosts(); }
+                else toast('REMOVAL FAILED', 'error');
+            } catch (e) { toast('SYNC ERROR', 'error'); }
+        }
+
+        // --- AI ENGINE (GEMINI) ---
+        async function callGemini(prompt) {
+            if (STATE.config.keys.length === 0) throw new Error("API KEYS MISSING. GO TO SYSTEM CONFIG.");
+
+            const keys = STATE.config.keys;
             for (let key of keys) {
                 try {
-                    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`;
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
                     const response = await fetch(url, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             contents: [{ parts: [{ text: prompt }] }],
-                            generationConfig: { temperature: 0.7, maxOutputTokens: 800 }
+                            generationConfig: { temperature: 0.7, maxOutputTokens: 1500 }
                         })
                     });
 
@@ -335,12 +730,10 @@
                         const json = await response.json();
                         return json.candidates[0].content.parts[0].text;
                     }
-                    console.warn(`Key failed with status ${response.status}. Trying next key...`);
-                } catch (e) {
-                    console.error("Fetch error for key, trying next...", e);
-                }
+                    console.warn(`Node ${key.substring(0,6)}... returned status ${response.status}. Rotating...`);
+                } catch (e) { console.error("Key propagation error, trying next node...", e); }
             }
-            throw new Error("Gagal merespons. Pastikan API Key valid dan memiliki kuota.");
+            throw new Error("ALL API NODES EXHAUSTED OR OFFLINE.");
         }
 
         async function generateAI() {
@@ -348,80 +741,172 @@
             const price = document.getElementById('field-price').value;
             const location = document.getElementById('field-location').value;
 
-            if (!title || !price || !location) return showStatus('Isi Judul, Harga, dan Lokasi dulu!', true);
+            if (!title || !price || !location) return toast('CORE DATA (TITLE, PRICE, LOCATION) REQUIRED', 'error');
 
             const btn = document.getElementById('btn-ai');
             const originalText = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '✨ SEDANG BERPIKIR...';
+            btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> SYNTHESIZING...';
 
-            const detectedLabels = blogFeed.labels.join(', ');
-            const prompt = `Buatkan deskripsi jualan produk yang menarik dan SEO friendly untuk Blogger.
-            Data Produk:
-            - Judul: ${title}
-            - Harga: ${price}
-            - Lokasi: ${location}
-
-            Konteks Blog:
-            - Daftar Label Aktif: [${detectedLabels}]
-
-            Format jawaban harus JSON valid dengan key:
-            - description: (Gunakan HTML sederhana seperti <p>, <b>, <ul> untuk list fitur)
-            - labels: (Pilih label yang sudah ada jika cocok, atau buat baru jika perlu. Berupa array string)
-            - alt_text: (Deskripsi gambar singkat untuk SEO)
-
-            Pastikan deskripsi persuasif tapi tetap profesional.`;
+            const detectedLabels = STATE.blogFeed.labels.join(', ');
+            const prompt = `Act as Sales Content Synthesizer. Output JSON only.
+            Product: "${title}" | Price: "${price}" | Location: "${location}"
+            Contextual Labels: [${detectedLabels}]
+            Requirement:
+            {
+                "description": "HTML description with <b> and <ul>",
+                "labels": ["string", "from", "detected", "or", "new"],
+                "alt_text": "short seo alt"
+            }`;
 
             try {
                 const aiResponse = await callGemini(prompt);
                 const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-                if (!jsonMatch) throw new Error("AI tidak memberikan format JSON yang valid.");
+                if (!jsonMatch) throw new Error("INVALID AI MATRIX OUTPUT");
                 const result = JSON.parse(jsonMatch[0]);
 
                 document.getElementById('field-description').value = result.description;
                 document.getElementById('field-alt_text').value = result.alt_text;
                 document.getElementById('field-labels').value = JSON.stringify(result.labels);
-                showStatus('AI Berhasil Membuat SEO!');
-            } catch (e) {
-                showStatus(e.message, true);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = originalText;
-            }
+                toast('AI SYNTHESIS COMPLETE', 'success');
+            } catch (e) { toast(e.message, 'error'); }
+            finally { btn.disabled = false; btn.innerHTML = originalText; }
         }
 
-        async function handlePost(e) {
-            e.preventDefault();
-            const btn = document.getElementById('btn-submit-post');
-            const loader = document.getElementById('loader');
+        // --- ARCHITECT MODULE ---
+        async function runArchitect() {
+            const topic = document.getElementById('arc-topic').value;
+            if(!topic) return toast('TOPIC VECTOR REQUIRED', 'error');
+
+            const btn = document.getElementById('btn-arc');
             btn.disabled = true;
-            loader.classList.remove('hidden');
-
-            const data = Object.fromEntries(new FormData(e.target));
-            data.password = localStorage.getItem('omnipost_pass');
-            if (data.labels) data.labels = JSON.parse(data.labels);
-            data.action = isEditMode ? 'updatePost' : 'createPost';
-
-            const file = document.getElementById('post-photo').files[0];
-            if (file) data.photoData = await compressImage(file);
-
-            if (!isEditMode) {
-                data.jsonId = 'OP-' + Date.now();
-            }
+            document.getElementById('arc-overlay').classList.remove('hidden');
 
             try {
-                const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(data) });
-                const result = await res.json();
-                if (result.success) { showStatus('Sinkronisasi Berhasil!'); showView('view-dashboard'); }
-                else showStatus(result.message, true);
-            } catch (err) {
-                showStatus('Koneksi Error.', true);
-            } finally {
-                btn.disabled = false;
-                loader.classList.add('hidden');
-            }
+                const prompt = `Write a viral SEO article about "${topic}". Use expert tone. Markdown format. Include bold keywords. Use Indonesian.`;
+                const content = await callGemini(prompt);
+                document.getElementById('arc-editor').innerHTML = marked.parse(content);
+                toast('NEURAL SYNTHESIS COMPLETE', 'success');
+            } catch(e) { toast('ARCHITECT ERROR: ' + e.message, 'error'); }
+
+            document.getElementById('arc-overlay').classList.add('hidden');
+            btn.disabled = false;
         }
 
+        // --- WAR ROOM & ATOM CORE ---
+        window.runTuyul = async () => {
+            const seed = document.getElementById('wr-seed').value;
+            if(!seed) return toast('SEED KEYWORD REQUIRED', 'error');
+
+            const btn = document.getElementById('btn-tuyul');
+            btn.disabled = true; btn.innerText = "IDEATING...";
+
+            try {
+                const prompt = `Based on seed "${seed}", generate 10 specific services and 10 locations in Indonesia. Output JSON: {"a": "service1, service2...", "b": "loc1, loc2..."}`;
+                const res = await callGemini(prompt);
+                const data = JSON.parse(res.match(/\{[\s\S]*\}/)[0]);
+                document.getElementById('wr-a').value = data.a;
+                document.getElementById('wr-b').value = data.b;
+                toast('VECTORS ACQUIRED', 'success');
+            } catch(e) { toast('TUYUL ERROR', 'error'); }
+            btn.disabled = false; btn.innerText = "IDEATE";
+        };
+
+        window.buildQueue = () => {
+            const a = document.getElementById('wr-a').value.split(',').map(s=>s.trim()).filter(s=>s);
+            const b = document.getElementById('wr-b').value.split(',').map(s=>s.trim()).filter(s=>s);
+
+            STATE.queue = [];
+            a.forEach(va => b.forEach(vb => STATE.queue.push({ a: va, b: vb, status: 'PENDING' })));
+
+            updateQueueUI();
+            document.getElementById('dash-queue').innerText = STATE.queue.length;
+            nav('atom');
+            toast(`${STATE.queue.length} DIRECTIVES LOADED TO CORE`, 'success');
+        };
+
+        function updateQueueUI() {
+            const list = document.getElementById('queue-list');
+            const count = document.getElementById('queue-count');
+            count.innerText = `${STATE.queue.length} UNITS`;
+            if(!STATE.queue.length) { list.innerHTML = `<div class="text-center text-slate-600 text-[10px] font-mono py-20 tracking-widest">SYSTEM STANDBY.</div>`; return; }
+            list.innerHTML = STATE.queue.map(t => `
+                <div class="p-3 bg-white/5 border border-white/5 rounded flex justify-between items-center text-[10px] font-mono">
+                    <span class="text-slate-400 uppercase tracking-tighter">${t.a} @ ${t.b}</span>
+                    <span class="${t.status==='DONE'?'text-emerald-400':(t.status==='FAIL'?'text-rose-500':'text-slate-600')} font-bold">${t.status}</span>
+                </div>
+            `).join('');
+        }
+
+        window.startAtom = async () => {
+            if(STATE.running) return;
+            if(!STATE.config.bridge) return toast('BRIDGE INTERFACE OFFLINE', 'error');
+            if(!STATE.queue.some(t => t.status === 'PENDING')) return toast('NO PENDING DIRECTIVES', 'error');
+
+            STATE.running = true; STATE.stop = false;
+            const statusEl = document.getElementById('core-status');
+            statusEl.innerText = "ACTIVE"; statusEl.className = "text-3xl font-display font-bold text-cyan-500 animate-pulse-slow tracking-tighter";
+            document.getElementById('btn-start').disabled = true; document.getElementById('btn-stop').disabled = false;
+
+            log("KERNEL EXECUTION INITIATED...");
+
+            const worker = async (id) => {
+                while(!STATE.stop) {
+                    const idx = STATE.queue.findIndex(t => t.status === 'PENDING');
+                    if(idx === -1) break;
+
+                    const task = STATE.queue[idx]; task.status = 'PROCESSING'; updateQueueUI();
+                    log(`[THREAD-${id}] Synthesizing: ${task.a} in ${task.b}`);
+
+                    try {
+                        const prompt = `Write a professional SEO article for: "${task.a} Terbaik di ${task.b}". Indonesia. Use Markdown. Must be high authority tone. Target Year 2026.`;
+                        const content = await callGemini(prompt);
+
+                        const payload = {
+                            action: 'publish',
+                            password: STATE.pass,
+                            blogId: STATE.config.blogId,
+                            title: `${task.a} Terbaik di ${task.b}`,
+                            content: marked.parse(content),
+                            labels: [task.a, task.b, "OMNI_GENESIS"]
+                        };
+
+                        const res = await fetch(STATE.config.bridge, { method: 'POST', body: JSON.stringify(payload) });
+                        const json = await res.json();
+
+                        if(json.success) {
+                            task.status = 'DONE';
+                            STATE.produced++;
+                            document.getElementById('dash-produced').innerText = STATE.produced;
+                            savePersistence();
+                            log(`[THREAD-${id}] SUCCESS: DEPLOYED TO BLOGGER`, 'success');
+                        } else throw new Error(json.message);
+                    } catch(e) {
+                        task.status = 'FAIL';
+                        log(`[THREAD-${id}] ERROR: ${e.message}`, 'error');
+                    }
+
+                    updateQueueUI();
+                    const total = STATE.queue.length;
+                    const processed = STATE.queue.filter(t=>t.status!=='PENDING').length;
+                    const progress = Math.round((processed / total)*100);
+                    document.getElementById('progress-bar').style.width = `${progress}%`;
+                    document.getElementById('progress-text').innerText = `${progress}%`;
+
+                    await new Promise(r => setTimeout(r, parseInt(document.getElementById('atom-delay').value)*1000));
+                }
+            };
+
+            await Promise.all([worker(1), worker(2)]); // Dual Execution Threads
+
+            STATE.running = false;
+            statusEl.innerText = "COMPLETED"; statusEl.className = "text-3xl font-display font-bold text-slate-500 tracking-tighter";
+            document.getElementById('btn-start').disabled = false; document.getElementById('btn-stop').disabled = true;
+            toast('BATCH OPERATIONS FINISHED', 'success');
+        };
+
+        window.stopAtom = () => { STATE.stop = true; log("INTERRUPT SIGNAL BROADCASTED...", 'error'); };
+
+        // --- UTILS ---
         async function compressImage(file) {
             return new Promise(res => {
                 const reader = new FileReader();
@@ -429,12 +914,12 @@
                     const img = new Image();
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
-                        const max = 400; // Reduced to fit in Google Sheets (50k chars)
+                        const max = 400;
                         let w = img.width, h = img.height;
                         if (w > h) { if (w > max) { h *= max/w; w = max; } } else { if (h > max) { w *= max/h; h = max; } }
                         canvas.width = w; canvas.height = h;
                         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                        res(canvas.toDataURL('image/jpeg', 0.5)); // More aggressive compression
+                        res(canvas.toDataURL('image/jpeg', 0.5));
                     };
                     img.src = e.target.result;
                 };
@@ -442,16 +927,28 @@
             });
         }
 
-        window.onload = () => {
-            const pass = localStorage.getItem('omnipost_pass');
-            if (pass) {
-                document.getElementById('user-name').innerText = localStorage.getItem('omnipost_user') || 'User';
-                document.getElementById('user-initial').innerText = (localStorage.getItem('omnipost_user') || 'U').charAt(0);
-                document.getElementById('settings-gemini-keys').value = localStorage.getItem('omnipost_gemini_keys') || "";
-                document.getElementById('settings-blog-domain').value = localStorage.getItem('omnipost_blog_domain') || "";
-                syncFeed();
-                showView('view-dashboard');
-            }
+        function log(msg, type='info') {
+            const div = document.createElement('div');
+            const color = type==='error'?'text-rose-500':(type==='success'?'text-emerald-500':'text-cyan-600');
+            div.className = color;
+            div.innerText = `> ${new Date().toLocaleTimeString()} :: ${msg}`;
+            const term = document.getElementById('terminal');
+            term.appendChild(div); term.scrollTop = term.scrollHeight;
+        }
+
+        function toast(msg, type='info') {
+            const div = document.createElement('div');
+            const color = type==='error'?'border-rose-500 text-rose-400':(type==='success'?'border-emerald-500 text-emerald-400':'border-cyan-500 text-cyan-400');
+            div.className = `p-4 rounded-xl bg-[#020617]/95 border ${color} backdrop-blur shadow-2xl font-mono text-[10px] flex items-center gap-3 toast-enter pointer-events-auto min-w-[240px] tracking-widest uppercase font-bold`;
+            div.innerHTML = `<i class="fa-solid fa-${type==='error'?'circle-xmark':'circle-check'}"></i> ${msg}`;
+            document.getElementById('toast-container').appendChild(div);
+            setTimeout(() => { div.style.opacity = '0'; div.style.transition = '0.5s'; setTimeout(()=>div.remove(),500); }, 4000);
+        }
+
+        function initClock() { setInterval(() => document.getElementById('clock').innerText = new Date().toLocaleTimeString('en-GB'), 1000); }
+        window.exportLog = () => {
+            const blob = new Blob([STATE.queue.map(t=>`${t.a}|${t.b}|${t.status}`).join('\n')], {type:'text/plain'});
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `GENESIS_LOG_${Date.now()}.txt`; a.click();
         };
     </script>
 </body>

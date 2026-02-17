@@ -1,53 +1,48 @@
-# Panduan Pengaturan OmniPost Pro (Professional CRUD Edition)
+# Panduan OmniPost Pro // OMNI GENESIS Edition
 
-Selamat! Anda telah memiliki sistem **Blogger Sales Management Dashboard** yang profesional. Ikuti langkah-langkah di bawah ini untuk mengaktifkan aplikasi Anda.
+Selamat datang di **OMNI GENESIS v22.4**, sistem Hybrid SEO Generator tercanggih untuk Blogger. Dashboard ini menggabungkan manajemen penjualan profesional (Sales Vault) dengan mesin otomatisasi konten (Atom Core).
 
-## 1. Persiapan Google Spreadsheet & Otomatisasi
-1. Buat Google Spreadsheet baru.
+## 1. Persiapan Backend (Google Apps Script)
+1. Buat Google Spreadsheet baru. ID Spreadsheet Anda adalah: `1NgDZ6fzz30wH9pElVwoSepkkkPd73mmccl2WRCIyZ7A`.
 2. Buka **Extensions** > **Apps Script**.
-3. Salin kode dari `code.gs` ke editor Apps Script.
-4. Klik ikon **Project Settings (Roda Gigi)** di sebelah kiri.
-5. Gulir ke bawah ke **Script Properties** dan tambahkan properti berikut:
-   - `BLOG_ID`: ID Blog Blogger Anda.
-6. Kembali ke Editor, pilih fungsi **setupSystem** dari menu dropdown dan klik **Run**.
-   - Sistem akan otomatis menyiapkan kolom Spreadsheet yang diperlukan (**Users** & **Posts**) dengan skema profesional terbaru.
+3. Salin kode dari `code.gs` ke editor.
+4. Di Editor, klik ikon **+ (Services)** di sebelah kiri, tambahkan **Blogger API v3**.
+5. Klik **Deploy** > **New Deployment** > **Web App**.
+   - Execute as: **Me**
+   - Who has access: **Anyone**
+6. Salin **Web App URL** yang dihasilkan.
 
-## 2. Mendapatkan Blogger Blog ID
-1. Buka dashboard Blogger Anda.
-2. Lihat URL di browser: `https://www.blogger.com/blog/posts/ID_BLOG_ANDA`.
-3. Salin ID tersebut untuk dimasukkan ke Script Properties (Langkah 1.5).
+## 2. Inisialisasi Sistem
+1. Buka `index.html` di browser Anda.
+2. Karena ini adalah pertama kali, sistem akan berada di layar **Access Protocol**.
+3. Klik **System Config** (ikon roda gigi di pojok kiri bawah atau lewat menu pengaturan).
+4. Masukkan konfigurasi berikut:
+   - **Target Blogspot Domain**: Alamat blog Anda (misal: `toko-honda.blogspot.com`).
+   - **Bridge Interface (GAS URL)**: Masukkan URL Web App yang Anda salin di langkah sebelumnya.
+   - **Gemini Master Keys**: Masukkan satu atau beberapa API Key Gemini (satu per baris). Dapatkan di [Google AI Studio](https://aistudio.google.com/).
+   - **Blogger Blog ID**: Masukkan ID blog Anda.
+5. Klik **Commit Changes**.
 
-## 3. Mengaktifkan Layanan Blogger di Apps Script
-1. Di Editor Apps Script, klik ikon **+ (Tambah Layanan)** di sebelah kiri (Services).
-2. Cari **Blogger API**, pilih versi v3, dan klik **Add/Tambah**.
+## 3. Modul OMNI GENESIS
+### 🛰️ Dashboard
+Pusat kontrol untuk melihat statistik inventaris penjualan dan jumlah konten SEO yang telah diproduksi.
 
-## 4. Deployment sebagai Web App
-1. Klik tombol **Deploy** > **New Deployment**.
-2. Pilih tipe: **Web App**.
-3. Execute as: **Me (Saya)**.
-4. Who has access: **Anyone (Siapa saja)**.
-5. Klik **Deploy**, lalu salin **Web App URL**.
+### 🔒 Sales Vault (Individual CRUD)
+Gunakan modul ini untuk posting jualan manual. Dilengkapi fitur **AI Synthesize** untuk membuat deskripsi produk otomatis berdasarkan judul, harga, dan lokasi. Gambar akan otomatis dikompres ke lebar 400px untuk memastikan penyimpanan optimal di Google Sheets.
 
-## 5. Menghubungkan Frontend ke Backend
-1. Buka file `index.html`.
-2. Cari variabel `const GAS_URL = "YOUR_APPS_SCRIPT_URL";`.
-3. Ganti dengan URL yang Anda salin di langkah sebelumnya.
+### 🏛️ Architect
+Editor artikel AI tunggal. Masukkan topik, dan AI akan menyintesis artikel lengkap dengan format Markdown yang siap dipublikasikan.
 
-## 6. Fitur Dashboard Profesional
-Sistem ini dirancang untuk memudahkan manajemen jualan Anda:
-- **Visual Dashboard**: Menampilkan foto produk langsung di halaman utama.
-- **Status Barang**: Anda bisa menandai barang sebagai **Aktif** atau **Terjual**. Status ini akan muncul sebagai label otomatis di postingan Blogger.
-- **Full CRUD**: Buat, Lihat, Edit, dan Hapus postingan langsung dari satu dashboard.
-- **AI SEO Generator (Client-Side)**: Klik tombol ✨ **GUNAKAN AI SEO** untuk membuat deskripsi profesional, label SEO, dan Alt Text. Anda bisa mengatur API Key Gemini langsung melalui menu Pengaturan (ikon roda gigi ⚙️) di dashboard.
-- **Keamanan**: Data setiap pengunjung dipisahkan berdasarkan password akses yang didaftarkan. API Key Gemini disimpan secara lokal di browser Anda.
+### ⚔️ War Room (Tuyul Ideation)
+Mesin ideasi massal. Masukkan satu kata kunci (Seed), dan biarkan AI "Tuyul" menyarankan 10 jenis layanan dan 10 lokasi target di Indonesia. Klik **Construct Attack Vectors** untuk membuat kombinasi massal (hingga 100 kombinasi sekaligus).
 
-## Tambahan: Menghubungkan ke Google Cloud Project (Opsional)
-Jika Anda ingin menghubungkan script ini ke Project Google Cloud Anda (misalnya untuk monitoring atau limit API yang lebih tinggi):
-1. Buka Apps Script > **Project Settings**.
-2. Klik **Change Project**.
-3. Masukkan **Project Number** Anda: `827330939462`.
+### ⚛️ Atom Core (Automation Loop)
+Pusat eksekusi otomatis. Setelah antrean (queue) dibuat di War Room, modul ini akan menjalankan loop otomatis untuk menulis artikel SEO satu per satu dan mempublikasikannya ke Blogger sesuai interval waktu yang Anda tentukan.
+
+## 4. Keamanan & Data
+- **Enkripsi Lokal**: Semua pengaturan (API Key, URL, ID) disimpan di browser Anda menggunakan Base64.
+- **Isolasi Operator**: Setiap operator menggunakan password unik. Data postingan di Spreadsheet dipisahkan berdasarkan password tersebut, sehingga satu spreadsheet bisa digunakan oleh banyak orang tanpa data tertukar.
+- **Image Optimization**: Sistem secara otomatis mengoptimalkan gambar agar tetap di bawah batas 50.000 karakter sel Google Sheets.
 
 ---
-**Tips Penggunaan:**
-- Gunakan **Alt Text** yang deskriptif untuk meningkatkan SEO gambar di Google Image.
-- Saat mengedit, sistem akan menggunakan kembali foto lama jika Anda tidak mengunggah foto baru (hemat waktu!).
+*OmniPost Pro - Genesis Edition // Hybrid SEO Evolution*
