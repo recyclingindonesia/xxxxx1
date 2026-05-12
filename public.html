@@ -1,0 +1,225 @@
+<!--
+  ==========================================
+  OMNI v31.3  - PORTAL PUBLIK PENGHUNI (CSS MANDIRI)
+  Layer: OTAK (Super Cepat, Tanpa JS Luar), TIKUS (Anti-Cress Blogspot), KOPI (UI Elegan)
+  ==========================================
+-->
+
+<!-- ==========================================
+     CSS MANDIRI (PENGGANTI TAILWIND)
+     ========================================== -->
+<style>
+    /* Pagar Pelindung (Mencegah tabrakan dengan tema bawaan Blogspot) */
+    #omni-public-portal {
+        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        color: #334155; /* Slate 700 */
+        line-height: 1.5;
+        box-sizing: border-box;
+        width: 100%;
+        margin: 1.5rem auto;
+        background-color: #ffffff;
+        border-radius: 1rem;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e2e8f0; /* Slate 200 */
+        padding: 1.5rem;
+        overflow: hidden;
+    }
+    #omni-public-portal * { box-sizing: border-box; }
+
+    /* Header & Typography */
+    #omni-public-portal .omni-header { text-align: center; margin-bottom: 2rem; padding-top: 1rem; }
+    #omni-public-portal .omni-icon-box { display: inline-block; padding: 0.75rem; background-color: #f0f9ff; border-radius: 50%; margin-bottom: 0.75rem; font-size: 2rem; line-height: 1; }
+    #omni-public-portal h2 { margin: 0 0 0.5rem 0; font-size: 1.875rem; font-weight: 800; color: #0f172a; letter-spacing: -0.025em; line-height: 1.2; }
+    #omni-public-portal p.omni-subtitle { margin: 0 auto; font-size: 0.875rem; color: #64748b; max-width: 28rem; }
+
+    /* Status Bar */
+    #omni-public-portal .omni-status-bar { display: flex; justify-content: space-between; align-items: center; background-color: #f8fafc; padding: 0.75rem 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0; margin-bottom: 1rem; }
+    #omni-public-portal .omni-status-text { font-size: 0.75rem; font-weight: 500; color: #64748b; }
+    #omni-public-portal .omni-status-online { color: #059669; font-weight: 700; }
+    #omni-public-portal .omni-btn-refresh { background-color: #ffffff; border: 1px solid #cbd5e1; color: #334155; font-size: 0.75rem; font-weight: 700; padding: 0.375rem 0.75rem; border-radius: 0.25rem; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 0.25rem; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
+    #omni-public-portal .omni-btn-refresh:hover { background-color: #f1f5f9; }
+
+    /* Tabel Area */
+    #omni-public-portal .omni-table-container { width: 100%; overflow-x: auto; background-color: #ffffff; border-radius: 0.75rem; border: 1px solid #e2e8f0; margin-bottom: 2rem; }
+    #omni-public-portal table { width: 100%; min-width: 500px; border-collapse: collapse; text-align: left; font-size: 0.875rem; white-space: nowrap; margin: 0; }
+    #omni-public-portal thead { background-color: #f1f5f9; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem; color: #475569; font-weight: 700; }
+    #omni-public-portal th, #omni-public-portal td { padding: 1rem 1.25rem; border-bottom: 1px solid #f1f5f9; }
+    #omni-public-portal th { text-align: center; }
+
+    /* Warna Baris Tabel (Alternatif Tailwind) */
+    #omni-public-portal tbody tr { transition: background-color 0.2s; }
+    #omni-public-portal tbody tr:hover { background-color: #f8fafc; }
+    #omni-public-portal .row-aman { background-color: #ffffff; }
+    #omni-public-portal .row-warning { background-color: #ffffff; }
+    #omni-public-portal .row-urgent { background-color: #fff7ed; } /* Orange muda */
+    #omni-public-portal .row-overdue { background-color: #fff1f2; } /* Merah muda */
+    #omni-public-portal .row-overdue:hover { background-color: #ffe4e6; }
+
+    /* Tipografi dalam Tabel */
+    #omni-public-portal .td-kamar { text-align: center; font-weight: 900; color: #0f172a; font-size: 1.125rem; }
+    #omni-public-portal .td-nama { font-weight: 500; color: #334155; margin-bottom: 2px; }
+    #omni-public-portal .td-status-kecil { font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
+    #omni-public-portal .td-tempo { text-align: center; font-weight: 500; color: #475569; }
+    #omni-public-portal .td-sisa { text-align: center; font-weight: 700; }
+
+    /* Warna Teks Sisa Hari */
+    .text-aman { color: #059669; }
+    .text-warning { color: #d97706; }
+    .text-urgent { color: #c2410c; }
+    .text-overdue { color: #be123c; font-weight: 800; }
+
+    /* Call to Action Box */
+    #omni-public-portal .omni-cta { background-color: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 0.75rem; padding: 1.5rem; text-align: center; margin-top: 1rem; }
+    #omni-public-portal .omni-cta h3 { margin: 0 0 0.5rem 0; font-weight: 700; color: #065f46; line-height: 1.2; font-size: 1.125rem;}
+    #omni-public-portal .omni-cta p { margin: 0 0 1.25rem 0; font-size: 0.75rem; color: #059669; line-height: 1.5; }
+    #omni-public-portal .omni-btn-wa { display: inline-block; background-color: #10b981; color: #ffffff; font-weight: 700; font-size: 0.875rem; padding: 0.75rem 1.5rem; border-radius: 0.5rem; text-decoration: none; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.4); transition: transform 0.2s, background-color 0.2s; cursor: pointer; border: none; }
+    #omni-public-portal .omni-btn-wa:hover { background-color: #059669; transform: translateY(-2px); color: #ffffff; text-decoration: none; }
+
+    /* Animasi (HANTU Layer) */
+    @keyframes omniPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .omni-animate-pulse { animation: omniPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+    @keyframes omniSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .omni-animate-spin { display: inline-block; animation: omniSpin 1s linear infinite; }
+
+    /* Responsive untuk Layar HP Kecil */
+    @media (max-width: 600px) {
+        #omni-public-portal { padding: 1rem; margin: 0; border-radius: 0; border-left: none; border-right: none; }
+        #omni-public-portal h2 { font-size: 1.5rem; }
+    }
+</style>
+
+<!-- ==========================================
+     STRUKTUR HTML
+     ========================================== -->
+<div id="omni-public-portal">
+
+    <!-- Header -->
+    <div class="omni-header">
+        <div class="omni-icon-box">🏢</div>
+        <h2>Portal Tagihan Kos</h2>
+        <p class="omni-subtitle">Cek jadwal jatuh tempo pembayaran kamar Anda. Data diperbarui otomatis oleh sistem.</p>
+    </div>
+
+    <!-- Papan Info Interaktif -->
+    <div class="omni-status-bar">
+        <div class="omni-status-text">
+            Sistem: <span class="omni-status-online">● Aktif</span>
+        </div>
+        <button onclick="muatDataTagihan()" class="omni-btn-refresh">
+            <span>🔄</span> Segarkan
+        </button>
+    </div>
+
+    <!-- Area Tabel -->
+    <div class="omni-table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Kamar</th>
+                    <th>Penghuni</th>
+                    <th>Jatuh Tempo</th>
+                    <th>Sisa Waktu</th>
+                </tr>
+            </thead>
+            <tbody id="tabel-tagihan-publik">
+                <!-- Tampilan Loading Saat Pertama Dibuka -->
+                <tr>
+                    <td colspan="4" style="text-align: center; padding: 3rem 1rem; color: #94a3b8;">
+                        <span class="omni-animate-spin" style="font-size: 1.5rem; color: #0ea5e9; margin-bottom: 0.5rem;">⏳</span><br>
+                        Menghubungkan ke server database...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Call to Action (Tombol WA) -->
+    <div class="omni-cta">
+        <h3>Sudah Melakukan Pembayaran?</h3>
+        <p>Jika Anda sudah melakukan transfer, segera konfirmasi ke Admin agar sistem diperbarui dan invoice diterbitkan.</p>
+
+        <!-- ⚠️ GANTI DENGAN NOMOR WA ANDA DI SINI -->
+        <a href="https://wa.me/6281542471758?text=Halo%20Admin,%20saya%20sudah%20transfer%20untuk%20pembayaran%20kos.%20Mohon%20dicek%20ya." target="_blank" class="omni-btn-wa">
+            💬 Konfirmasi ke Admin
+        </a>
+    </div>
+
+</div>
+
+<!-- ==========================================
+     LOGIC & API INTEGRATION
+     ========================================== -->
+<script>
+    // ⚠️ MASUKKAN URL WEB APP GOOGLE APPS SCRIPT ANDA DI SINI
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyeo-6LK6uK_tq1V196MBqPaq9wIbXbl7_wMD9-nzRlkmLOcqr3Z8DJw11SvmEvGobqeA/exec";
+
+    async function muatDataTagihan() {
+        const tbody = document.getElementById('tabel-tagihan-publik');
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 2rem; color: #64748b;">🔄 Sedang memperbarui data...</td></tr>`;
+
+        try {
+            const response = await fetch(`${SCRIPT_URL}?action=getPublicData`, { method: 'GET', headers: { 'Accept': 'application/json' }});
+            if (!response.ok) throw new Error('Network Error');
+            const data = await response.json();
+
+            if (data && Array.isArray(data)) {
+                if(data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 2rem; color: #64748b;">Belum ada data penghuni kos.</td></tr>`;
+                    return;
+                }
+
+                // Urutkan data: Nunggak/Jatuh tempo terdekat berada di posisi paling atas
+                data.sort((a, b) => a.sisaHari - b.sisaHari);
+
+                let rowsHTML = '';
+                data.forEach(item => {
+                    let sisaTeks = `${item.sisaHari} Hari`;
+                    let statusTeks = 'Aman';
+
+                    // Variabel class CSS khusus
+                    let rowClass = 'row-aman';
+                    let textClass = 'text-aman';
+                    let animasiClass = '';
+
+                    if (item.status === 'OVERDUE') {
+                        sisaTeks = `Telat ${Math.abs(item.sisaHari)} Hari`;
+                        statusTeks = 'NUNGGAK';
+                        rowClass = 'row-overdue';
+                        textClass = 'text-overdue';
+                        animasiClass = 'omni-animate-pulse'; // Efek berkedip
+                    } else if (item.status === 'WARNING' || item.status === 'URGENT') {
+                        statusTeks = 'Mendekati Tempo';
+                        rowClass = 'row-warning';
+                        textClass = 'text-warning';
+                    } else if (item.sisaHari === 0) {
+                        sisaTeks = "Hari Ini";
+                        statusTeks = 'Batas Waktu';
+                        rowClass = 'row-urgent';
+                        textClass = 'text-urgent';
+                    }
+
+                    // Gabungkan menjadi baris tabel HTML
+                    rowsHTML += `
+                        <tr class="${rowClass}">
+                            <td class="td-kamar">${item.kamar}</td>
+                            <td>
+                                <div class="td-nama">${item.nama}</div>
+                                <div class="td-status-kecil">${statusTeks}</div>
+                            </td>
+                            <td class="td-tempo">${item.jatuhTempo}</td>
+                            <td class="td-sisa ${textClass} ${animasiClass}">${sisaTeks}</td>
+                        </tr>
+                    `;
+                });
+                tbody.innerHTML = rowsHTML;
+            } else {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 2rem; color: #be123c;">Format data tidak terbaca oleh sistem.</td></tr>`;
+            }
+        } catch (error) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 2rem; color: #be123c;">Gagal memuat data. Periksa koneksi internet Anda.</td></tr>`;
+        }
+    }
+
+    // Jalankan pemuatan data secara otomatis ketika halaman dibuka
+    window.onload = muatDataTagihan;
+</script>

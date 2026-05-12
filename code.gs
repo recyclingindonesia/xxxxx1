@@ -7,12 +7,14 @@
 // ------------------------------------------
 // 1. AREA KONFIGURASI UTAMA (NGOPREK)
 // ------------------------------------------
-const MASTER_PIN = "778899"; // PIN Keamanan Aplikasi (JAGAN)
-const GEMINI_API_KEY = "AIzaSyDoqhYUlGejcyiI1Na1DaGPwRTqxmsP-SQ"; // API Key Gemini Anda
+const props = PropertiesService.getScriptProperties();
 
-const FOLDER_INVOICE_ID = "1Zg3WgGvq5vBnvjTIuSScWWFr2EevRY_a";
-const TEMPLATE_DOC_ID = "101wSB_0PSNaqKb8W13fncA3w5Yi3Mtf8pRZ7XKBxxiM";
-const EMAIL_ADMIN = "recyclingindonesia@gmail.com, newpinabudiarti84@gmail.com";
+// Konfigurasi Sistem (Disarankan diisi via Project Settings -> Script Properties)
+const MASTER_PIN = props.getProperty('MASTER_PIN');
+const GEMINI_API_KEY = props.getProperty('GEMINI_API_KEY');
+const FOLDER_INVOICE_ID = props.getProperty('FOLDER_INVOICE_ID');
+const TEMPLATE_DOC_ID = props.getProperty('TEMPLATE_DOC_ID');
+const EMAIL_ADMIN = props.getProperty('EMAIL_ADMIN');
 
 // ------------------------------------------
 // 2. ROUTER API (Penghubung Web App <-> Database)
@@ -21,11 +23,16 @@ function doGet(e) {
   const action = (e && e.parameter) ? e.parameter.action : null;
   const pinInput = (e && e.parameter) ? e.parameter.pin : null;
 
-  // Global check for GET actions that need PIN
+  // Aksi Publik (Tanpa PIN)
+  if (action === 'getPublicData') {
+    return ContentService.createTextOutput(JSON.stringify(getPublicTenantData())).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  // LAYER JAGAN: Cek PIN untuk aksi Admin
   const actionsRequiringPin = ['getData', 'getHistory', 'add', 'pay', 'edit', 'checkout', 'addExpense'];
   if (actionsRequiringPin.indexOf(action) !== -1) {
-    if (pinInput !== MASTER_PIN) {
-      return ContentService.createTextOutput(JSON.stringify({ error: "[ SYSTEM_LOCK ]: AKSES DITOLAK! PIN SALAH." })).setMimeType(ContentService.MimeType.JSON);
+    if (!MASTER_PIN || pinInput !== MASTER_PIN) {
+      return ContentService.createTextOutput(JSON.stringify({ error: "[ SYSTEM_LOCK ]: AKSES DITOLAK! PIN SALAH ATAU BELUM DISET." })).setMimeType(ContentService.MimeType.JSON);
     }
   }
 
@@ -91,6 +98,26 @@ function hitungJatuhTempo(tglAwal, tambahBulan) {
   d.setMonth(d.getMonth() + parseInt(tambahBulan));
   if (d.getMonth() !== bulanTarget) d.setDate(0);
   return d;
+}
+
+function sensorNama(namaLengkap) {
+    if (!namaLengkap || namaLengkap === "KOSONG") return "KOSONG";
+    const kata = namaLengkap.trim().split(" ");
+    if (kata.length === 1) return kata[0].substring(0, 3) + "***";
+    return kata[0] + " " + kata[1].charAt(0) + "***";
+}
+
+function getPublicTenantData() {
+  const data = getTenantData();
+  return data.map(item => {
+    return {
+      kamar: item.kamar,
+      nama: sensorNama(item.nama),
+      jatuhTempo: item.jatuhTempo,
+      sisaHari: item.sisaHari,
+      status: item.status
+    };
+  });
 }
 
 function getTenantData() {
@@ -305,7 +332,7 @@ function kirimInvoiceEmail(emailTenant, nama, kamar, pdfFile, nominal, tanggal) 
         <h2 style="margin: 0;">Terima Kasih, ${nama}!</h2>
       </div>
       <div style="padding: 20px;">
-        <p>Pembayaran kos Anda telah kami terima dan dicatat oleh sistem dengan rincian:</p>
+        <p>Pembayaran kos Anda telah kami terima and dicatat oleh sistem dengan rincian:</p>
         <table style="width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 20px;">
           <tr><td style="padding: 8px 0; border-bottom: 1px solid #e2e8f0;"><strong>Kamar</strong></td><td style="padding: 8px 0; border-bottom: 1px solid #e2e8f0; text-align: right;">${kamar}</td></tr>
           <tr><td style="padding: 8px 0; border-bottom: 1px solid #e2e8f0;"><strong>Tanggal</strong></td><td style="padding: 8px 0; border-bottom: 1px solid #e2e8f0; text-align: right;">${tanggal}</td></tr>
@@ -327,14 +354,16 @@ function kirimInvoiceEmail(emailTenant, nama, kamar, pdfFile, nominal, tanggal) 
     } catch (e) { Logger.log("Gagal kirim ke penghuni: " + e.toString()); }
   }
 
-  try {
-    MailApp.sendEmail({
-      to: EMAIL_ADMIN,
-      subject: `[ARSIP MASUK] ${subject}`,
-      htmlBody: `<p>Sistem OMNI telah berhasil menerbitkan invoice pembayaran untuk <b>${nama} (Kamar ${kamar})</b>. Arsip PDF terlampir.</p>`,
-      attachments: attachments
-    });
-  } catch (e) { Logger.log("Gagal kirim ke admin: " + e.toString()); }
+  if (EMAIL_ADMIN) {
+    try {
+      MailApp.sendEmail({
+        to: EMAIL_ADMIN,
+        subject: `[ARSIP MASUK] ${subject}`,
+        htmlBody: `<p>Sistem OMNI telah berhasil menerbitkan invoice pembayaran untuk <b>${nama} (Kamar ${kamar})</b>. Arsip PDF terlampir.</p>`,
+        attachments: attachments
+      });
+    } catch (e) { Logger.log("Gagal kirim ke admin: " + e.toString()); }
+  }
 
   return isEmailSent;
 }
@@ -435,7 +464,7 @@ function kirimEmailReport() {
   });
 
   // KIRIM LAPORAN ADMIN
-  if (countAction > 0) {
+  if (countAction > 0 && EMAIL_ADMIN) {
     const htmlBodyAdmin = `
       <div style="font-family: sans-serif; color: #334155;">
         <h2 style="color: #0f172a; border-bottom: 2px solid #0ea5e9; padding-bottom: 10px;">Laporan Mitigasi Kos (Sistem OMNI)</h2>
