@@ -16,6 +16,16 @@
     <h1>Integrasi Google Maps</h1>
     <p>Lokasi yang Anda berikan adalah di koordinat: <strong>-6.9645135, 110.4381255</strong> (Semarang, Indonesia).</p>
 
+    <!-- Form Pencarian -->
+    <section style="margin-bottom: 20px; background: #f8f9fa; padding: 15px; border-radius: 8px;">
+        <h3>Cari Lokasi</h3>
+        <form id="searchForm" style="display: flex; gap: 10px;">
+            <input type="text" id="searchInput" placeholder="Masukkan nama tempat atau alamat..." style="flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+            <button type="submit" class="btn" style="border: none; cursor: pointer;">Cari</button>
+        </form>
+        <p id="searchStatus" style="margin-top: 10px; font-size: 0.9em; color: #666;"></p>
+    </section>
+
     <!-- 1. Menampilkan Map via Iframe -->
     <div class="map-container">
         <iframe
@@ -28,6 +38,20 @@
 
     <!-- 2. Tombol Navigasi -->
     <a href="https://www.google.com/maps/@-6.9645135,110.4381255,13z" target="_blank" class="btn">Buka di Google Maps</a>
+
+    <script>
+        document.getElementById('searchForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const query = document.getElementById('searchInput').value;
+            if (query) {
+                document.getElementById('searchStatus').innerText = 'Mencari: ' + query + '...';
+                // Simulasi redirect ke Google Maps Search
+                setTimeout(() => {
+                    window.open('https://www.google.com/maps/search/' + encodeURIComponent(query), '_blank');
+                }, 500);
+            }
+        });
+    </script>
 
     <section>
         <h2>Apa yang bisa dilakukan di Web?</h2>
