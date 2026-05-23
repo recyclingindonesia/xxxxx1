@@ -3,68 +3,247 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pencarian Toko Besi Semarang - Web Extract</title>
+    <title>OmniMap Semarang - Smart Search Dashboard</title>
     <style>
         :root {
             --primary: #1a73e8;
             --secondary: #34a853;
-            --text: #333;
+            --accent: #fbbc04;
+            --text: #202124;
+            --gray: #5f6368;
             --bg: #f8f9fa;
-        }
-        body { font-family: 'Roboto', Arial, sans-serif; line-height: 1.6; padding: 0; margin: 0; background-color: var(--bg); color: var(--text); }
-        .header { background: white; padding: 20px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
-        .header h1 { margin: 0; color: var(--primary); font-size: 1.5rem; }
-
-        .main-content { display: flex; flex-direction: column; max-width: 1200px; margin: 20px auto; gap: 20px; padding: 0 15px; }
-
-        @media (min-width: 992px) {
-            .main-content { flex-direction: row; align-items: flex-start; }
-            .list-section { width: 400px; height: calc(100vh - 120px); overflow-y: auto; }
-            .map-section { flex-grow: 1; position: sticky; top: 100px; height: calc(100vh - 120px); }
+            --white: #ffffff;
+            --shadow: 0 1px 3px rgba(60,64,67,0.3), 0 4px 8px 3px rgba(60,64,67,0.15);
         }
 
-        .list-section { background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); padding: 15px; }
-        .map-section { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05); height: 500px; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
 
-        .store-card { border-bottom: 1px solid #eee; padding: 15px 0; transition: background 0.2s; cursor: pointer; }
-        .store-card:last-child { border-bottom: none; }
-        .store-card:hover { background: #fcfcfc; }
-        .store-card h3 { margin: 0 0 5px 0; color: var(--primary); font-size: 1.1rem; }
-        .store-card p { margin: 3px 0; font-size: 0.85rem; color: #666; }
-        .actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+        /* Navbar */
+        .navbar {
+            background: var(--white);
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 1px 2px rgba(60,64,67,0.3);
+            z-index: 1000;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: var(--primary);
+        }
 
-        .btn-sm { padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: bold; text-decoration: none; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
-        .btn-map { background: #e8f0fe; color: var(--primary); }
-        .btn-wa { background: #25d366; color: white; }
+        .search-container {
+            flex-grow: 1;
+            max-width: 600px;
+            margin: 0 20px;
+            position: relative;
+        }
+        .search-container input {
+            width: 100%;
+            padding: 12px 45px;
+            border-radius: 24px;
+            border: 1px solid #dfe1e5;
+            font-size: 16px;
+            outline: none;
+            transition: box-shadow 0.2s;
+        }
+        .search-container input:focus {
+            box-shadow: 0 1px 6px rgba(32,33,36,0.28);
+            border-color: rgba(223,225,229,0);
+        }
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray);
+        }
+
+        /* Main Body */
+        .app-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 380px;
+            background: var(--white);
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            z-index: 900;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+        }
+
+        .category-tabs {
+            display: flex;
+            border-bottom: 1px solid #eee;
+            background: #fff;
+        }
+        .tab {
+            flex: 1;
+            padding: 15px 5px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--gray);
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+        .tab:hover { background: #f1f3f4; }
+
+        .results-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .store-card {
+            padding: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            margin-bottom: 8px;
+            transition: all 0.2s;
+        }
+        .store-card:hover { background: #f8f9fa; }
+        .store-card.active {
+            background: #e8f0fe;
+            border-left: 4px solid var(--primary);
+        }
+        .store-card h3 { margin: 0 0 4px 0; font-size: 1rem; color: #1a0dab; }
+        .store-card .info { font-size: 0.85rem; color: #3c4043; margin-bottom: 8px; }
+        .store-card .meta { font-size: 0.75rem; color: var(--gray); }
+
+        .card-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+        .btn {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid #dadce0;
+            background: white;
+            color: var(--primary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn:hover { background: #f1f3f4; }
+        .btn-wa { background: #25d366; color: white; border: none; }
         .btn-wa:hover { background: #128c7e; }
 
+        /* Map */
+        .map-container {
+            flex: 1;
+            background: #e5e3df;
+            position: relative;
+        }
         iframe { width: 100%; height: 100%; border: 0; }
 
-        .search-bar { margin-bottom: 15px; }
-        .search-bar input { width: 100%; padding: 12px 15px; border: 1px solid #ddd; border-radius: 24px; box-sizing: border-box; outline: none; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05); }
-        .search-bar input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(26,115,232,0.2); }
+        /* Loading Overlay */
+        .loader {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1001;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        .active-card { background: #f0f7ff !important; border-left: 4px solid var(--primary); padding-left: 11px; }
+        @media (max-width: 768px) {
+            .sidebar {
+                position: absolute;
+                bottom: 0;
+                width: 100%;
+                height: 40%;
+                transform: translateY(0);
+            }
+            .navbar { flex-wrap: wrap; }
+            .search-container { order: 3; width: 100%; margin: 10px 0 0 0; max-width: none; }
+        }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>🛠️ Toko Besi Semarang - Web Display</h1>
+
+    <div class="navbar">
+        <div class="logo">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+            OmniMap Semarang
+        </div>
+        <div class="search-container">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="globalSearch" placeholder="Cari toko, jalan, atau lokasi di Semarang...">
+        </div>
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <div style="font-size: 0.8rem; color: var(--gray); font-weight: 500;">v2.1 Smart View</div>
+            <div style="width: 32px; height: 32px; background: #e8f0fe; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); font-weight: bold; cursor: pointer;">J</div>
+        </div>
     </div>
 
-    <div class="main-content">
-        <div class="list-section">
-            <div class="search-bar">
-                <input type="text" id="searchInput" placeholder="Cari nama atau alamat toko besi...">
+    <div class="app-container">
+        <div class="sidebar">
+            <div class="category-tabs" id="categoryTabs">
+                <div class="tab active" data-cat="besi">Toko Besi</div>
+                <div class="tab" data-cat="bangunan">Bangunan</div>
+                <div class="tab" data-cat="apotek">Apotek</div>
+                <div class="tab" data-cat="all">Semua</div>
             </div>
-            <div id="storeList">
-                <!-- Data will be injected here -->
+            <div style="padding: 10px 16px; font-size: 0.75rem; color: var(--gray); border-bottom: 1px solid #eee; display: flex; justify-content: space-between;">
+                <span id="resultCount">Menampilkan 11 lokasi</span>
+                <span style="color: var(--primary); cursor: pointer;">Urutkan ▼</span>
+            </div>
+            <div class="results-container" id="resultsContainer">
+                <!-- Cards injected here -->
+            </div>
+            <div style="padding: 15px; background: #f1f3f4; font-size: 0.7rem; color: var(--gray); text-align: center;">
+                Berdasarkan data publik Google Maps & Database Lokal
             </div>
         </div>
 
-        <div class="map-section">
+        <div class="map-container">
+            <div class="loader" id="mapLoader">
+                <div class="spinner"></div>
+                <div style="font-weight: 500; color: var(--primary);">Mengekstrak data lokasi...</div>
+            </div>
             <iframe
-                id="mainMap"
+                id="mainIframe"
                 src="https://maps.google.com/maps?q=-6.9645135,110.4381255&z=13&output=embed"
                 allowfullscreen=""
                 loading="lazy">
@@ -73,100 +252,115 @@
     </div>
 
     <script>
-        const stores = [
-            {
-                id: 1,
-                name: "Wijaya Abadi Besi",
-                address: "Jl. Anggrek 11 No. 1, Pekunden, Semarang",
-                phone: "024 76585269",
-                wa: "622476585269",
-                latlng: "-6.985651,110.420455"
-            },
-            {
-                id: 2,
-                name: "Toko Besi Tan",
-                address: "Jl. M.T. Haryono No. 370A, Semarang",
-                phone: "024 3545789",
-                wa: "62243545789",
-                latlng: "-6.993214,110.428765"
-            },
-            {
-                id: 3,
-                name: "Mitra10 Semarang",
-                address: "Jl. Soekarno Hatta No.299, Pedurungan, Semarang",
-                phone: "0878 0002 1010",
-                wa: "6287800021010",
-                latlng: "-7.000123,110.461234"
-            },
-            {
-                id: 4,
-                name: "Toko Besi Alfa Jaya",
-                address: "Jl. Citarum Raya No. 58, Semarang",
-                phone: "024 3512345",
-                wa: "62243512345",
-                latlng: "-6.978123,110.435678"
-            },
-            {
-                id: 5,
-                name: "PT. Immanuel Dunamis",
-                address: "Kawasan Industri Candi Blok N No. 1, Ngaliyan",
-                phone: "024 7627464",
-                wa: "62247627464",
-                latlng: "-7.012345,110.345678"
-            }
-        ];
+        const database = {
+            besi: [
+                { id: 1, name: "Wijaya Abadi Besi", addr: "Jl. Anggrek 11 No. 1, Pekunden", tel: "024 76585269", wa: "622476585269", pos: "-6.985651,110.420455" },
+                { id: 2, name: "Toko Besi Tan", addr: "Jl. M.T. Haryono No. 370A", tel: "024 3545789", wa: "62243545789", pos: "-6.993214,110.428765" },
+                { id: 3, name: "Toko Besi Alfa Jaya", addr: "Jl. Citarum Raya No. 58", tel: "024 3512345", wa: "62243512345", pos: "-6.978123,110.435678" },
+                { id: 4, name: "PT. Immanuel Dunamis", addr: "Kawasan Industri Candi Blok N No. 1", tel: "024 7627464", wa: "62247627464", pos: "-7.012345,110.345678" }
+            ],
+            bangunan: [
+                { id: 5, name: "Mitra10 Semarang", addr: "Jl. Soekarno Hatta No.299", tel: "0878 0002 1010", wa: "6287800021010", pos: "-7.000123,110.461234" },
+                { id: 6, name: "Toko Bangunan Prasojo", addr: "Jalan Kedungmundu, Tandang", tel: "Cek di Lokasi", wa: "", pos: "-7.0182,110.4567" },
+                { id: 7, name: "Toko Bangunan Adinda", addr: "Jl. Ketileng Raya No. 15", tel: "Cek di Lokasi", wa: "", pos: "-7.025,110.46" }
+            ],
+            apotek: [
+                { id: 8, name: "Apotek Sarika Majapahit", addr: "Jl. Majapahit No.236", tel: "024 76410306", wa: "622476410306", pos: "-7.005,110.448" },
+                { id: 9, name: "Apotek Kimia Farma", addr: "Jl. Pandanaran No.66", tel: "024 3541510", wa: "62243541510", pos: "-6.984,110.418" },
+                { id: 10, name: "K-24 Anjasmoro", addr: "Jl. Anjasmoro No. 55", tel: "024 76434729", wa: "6281212624293", pos: "-6.965,110.395" },
+                { id: 11, name: "K-24 Sampangan", addr: "Jl. Kelud Raya No. 19", tel: "Cek di Lokasi", wa: "6281212624293", pos: "-7.002,110.398" }
+            ]
+        };
 
-        const storeList = document.getElementById('storeList');
-        const searchInput = document.getElementById('searchInput');
-        const mainMap = document.getElementById('mainMap');
+        const container = document.getElementById('resultsContainer');
+        const searchInput = document.getElementById('globalSearch');
+        const iframe = document.getElementById('mainIframe');
+        const loader = document.getElementById('mapLoader');
+        const tabs = document.querySelectorAll('.tab');
 
+        let currentCat = 'besi';
         let activeId = null;
 
-        function renderStores(filter = '') {
-            storeList.innerHTML = '';
-            const filtered = stores.filter(s =>
-                s.name.toLowerCase().includes(filter.toLowerCase()) ||
-                s.address.toLowerCase().includes(filter.toLowerCase())
+        function showLoader() {
+            loader.style.display = 'flex';
+            setTimeout(() => loader.style.display = 'none', 800);
+        }
+
+        function render(filter = '') {
+            container.innerHTML = '';
+            let list = [];
+
+            if (currentCat === 'all') {
+                list = [...database.besi, ...database.bangunan, ...database.apotek];
+            } else {
+                list = database[currentCat] || [];
+            }
+
+            const filtered = list.filter(item =>
+                item.name.toLowerCase().includes(filter.toLowerCase()) ||
+                item.addr.toLowerCase().includes(filter.toLowerCase())
             );
 
-            filtered.forEach(store => {
+            document.getElementById('resultCount').innerText = `Menampilkan ${filtered.length} lokasi`;
+
+            if (filtered.length === 0 && filter.length > 2) {
+                container.innerHTML = `<div style="padding:20px; color:var(--gray); text-align:center;">
+                    Tidak ada hasil lokal. Tekan Enter untuk cari langsung di Google Maps.
+                </div>`;
+                return;
+            }
+
+            filtered.forEach(item => {
                 const card = document.createElement('div');
-                card.className = `store-card ${activeId === store.id ? 'active-card' : ''}`;
+                card.className = `store-card ${activeId === item.id ? 'active' : ''}`;
                 card.innerHTML = `
-                    <h3>${store.name}</h3>
-                    <p>📍 ${store.address}</p>
-                    <p>📞 ${store.phone}</p>
-                    <div class="actions">
-                        <button class="btn-sm btn-map" onclick="handleMapClick(event, ${store.id})">📍 Lihat Peta</button>
-                        <a href="https://wa.me/${store.wa}" target="_blank" class="btn-sm btn-wa" onclick="event.stopPropagation()">💬 WhatsApp</a>
+                    <h3>${item.name}</h3>
+                    <div class="info">📍 ${item.addr}</div>
+                    <div class="meta">📞 ${item.tel}</div>
+                    <div class="card-actions">
+                        <button class="btn" onclick="focusLoc('${item.pos}', ${item.id}, event)">📍 Lihat Peta</button>
+                        ${item.wa ? `<a href="https://wa.me/${item.wa}" target="_blank" class="btn btn-wa" onclick="event.stopPropagation()">💬 WA</a>` : ''}
                     </div>
                 `;
-                card.onclick = () => {
-                    updateMap(store.latlng, store.id);
-                };
-                storeList.appendChild(card);
+                card.onclick = () => focusLoc(item.pos, item.id);
+                container.appendChild(card);
             });
         }
 
-        function handleMapClick(event, id) {
-            event.stopPropagation();
-            const store = stores.find(s => s.id === id);
-            updateMap(store.latlng, id);
-        }
-
-        function updateMap(latlng, id) {
+        function focusLoc(pos, id, event) {
+            if(event) event.stopPropagation();
             activeId = id;
-            renderStores(searchInput.value);
-            // Using q=lat,lng is the most reliable for pointing to a specific location in embed mode
-            mainMap.src = `https://maps.google.com/maps?q=${latlng}&z=17&output=embed`;
+            showLoader();
+            iframe.src = `https://maps.google.com/maps?q=${pos}&z=17&output=embed`;
+            render(searchInput.value);
         }
 
-        searchInput.addEventListener('input', (e) => {
-            renderStores(e.target.value);
+        function liveSearch(query) {
+            showLoader();
+            // Encode query for direct Google Maps Search
+            const safeQuery = encodeURIComponent(query + " Semarang");
+            iframe.src = `https://maps.google.com/maps?q=${safeQuery}&z=15&output=embed`;
+        }
+
+        tabs.forEach(tab => {
+            tab.onclick = () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentCat = tab.dataset.cat;
+                render(searchInput.value);
+            };
         });
 
-        // Initial render
-        renderStores();
+        searchInput.oninput = (e) => render(e.target.value);
+
+        searchInput.onkeydown = (e) => {
+            if (e.key === 'Enter' && searchInput.value.length > 0) {
+                liveSearch(searchInput.value);
+            }
+        };
+
+        // Initial
+        render();
     </script>
 </body>
 </html>
