@@ -79,17 +79,27 @@
             display: flex;
             flex: 1;
             overflow: hidden;
+            position: relative;
         }
 
         /* Sidebar */
         .sidebar {
             width: 380px;
             background: var(--white);
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
             z-index: 900;
             display: flex;
             flex-direction: column;
-            transition: transform 0.3s ease;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-handle {
+            display: none;
+            width: 40px;
+            height: 4px;
+            background: #ccc;
+            border-radius: 2px;
+            margin: 8px auto;
         }
 
         .category-tabs {
@@ -188,15 +198,20 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         @media (max-width: 768px) {
-            .sidebar {
-                position: absolute;
-                bottom: 0;
-                width: 100%;
-                height: 40%;
-                transform: translateY(0);
+            .app-container {
+                flex-direction: column-reverse;
             }
-            .navbar { flex-wrap: wrap; }
-            .search-container { order: 3; width: 100%; margin: 10px 0 0 0; max-width: none; }
+            .sidebar {
+                width: 100%;
+                height: 50%;
+                border-radius: 20px 20px 0 0;
+                box-shadow: 0 -5px 15px rgba(0,0,0,0.1);
+            }
+            .mobile-handle { display: block; }
+            .navbar { padding: 8px 12px; }
+            .logo { font-size: 1rem; }
+            .search-container { margin: 5px 0; }
+            .search-container input { padding: 10px 40px; font-size: 14px; }
         }
     </style>
 </head>
@@ -212,13 +227,14 @@
             <input type="text" id="globalSearch" placeholder="Cari toko, jalan, atau lokasi di Semarang...">
         </div>
         <div style="display: flex; gap: 15px; align-items: center;">
-            <div style="font-size: 0.8rem; color: var(--gray); font-weight: 500;">v2.1 Smart View</div>
+            <div style="font-size: 0.8rem; color: var(--gray); font-weight: 500;">v2.2 Mobile Optimized</div>
             <div style="width: 32px; height: 32px; background: #e8f0fe; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); font-weight: bold; cursor: pointer;">J</div>
         </div>
     </div>
 
     <div class="app-container">
         <div class="sidebar">
+            <div class="mobile-handle"></div>
             <div class="category-tabs" id="categoryTabs">
                 <div class="tab active" data-cat="besi">Toko Besi</div>
                 <div class="tab" data-cat="bangunan">Bangunan</div>
@@ -331,15 +347,20 @@
             if(event) event.stopPropagation();
             activeId = id;
             showLoader();
-            iframe.src = `https://maps.google.com/maps?q=${pos}&z=17&output=embed`;
+            // Added more params to force web view behavior
+            iframe.src = `https://maps.google.com/maps?q=${pos}&z=17&t=m&ie=UTF8&iwloc=near&output=embed`;
             render(searchInput.value);
+
+            // On mobile, minimize sidebar slightly when focused
+            if (window.innerWidth <= 768) {
+                document.querySelector('.sidebar').style.height = '35%';
+            }
         }
 
         function liveSearch(query) {
             showLoader();
-            // Encode query for direct Google Maps Search
             const safeQuery = encodeURIComponent(query + " Semarang");
-            iframe.src = `https://maps.google.com/maps?q=${safeQuery}&z=15&output=embed`;
+            iframe.src = `https://maps.google.com/maps?q=${safeQuery}&z=15&t=m&ie=UTF8&iwloc=near&output=embed`;
         }
 
         tabs.forEach(tab => {
