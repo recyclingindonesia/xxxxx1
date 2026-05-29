@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OMNI Parser: Gemini to Blogspot</title>
+    <!-- TIKUS: Menggunakan library eksternal yang andal untuk parsing Markdown -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        /* KOPI: Desain UI Modern, Berbasis Card & Clean Layout */
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --success: #10b981;
+            --success-hover: #059669;
+            --action: #0ea5e9;
+            --action-hover: #0284c7;
+            --bg: #f3f4f6;
+            --surface: #ffffff;
+            --text: #111827;
+            --text-muted: #6b7280;
+            --border: #e5e7eb;
+            --radius: 16px;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; line-height: 1.6; }
+
+        .container { max-width: 1200px; margin: 0 auto; }
+
+        .app-header { text-align: center; margin-bottom: 40px; padding: 20px 0; }
+        .app-header h2 { color: var(--primary); margin: 0 0 12px 0; display: inline-flex; align-items: center; gap: 12px; font-size: 2.5rem; letter-spacing: -0.025em; font-weight: 800;}
+        .app-header p { color: var(--text-muted); margin: 0; font-size: 1.25rem; font-weight: 500; }
+
+        .card { background: var(--surface); border-radius: var(--radius); padding: 32px; box-shadow: var(--shadow); margin-bottom: 30px; border: 1px solid var(--border); transition: transform 0.2s ease; }
+        .card:hover { transform: translateY(-2px); }
+        .card-title { font-size: 1.25rem; font-weight: 700; margin-top: 0; margin-bottom: 20px; display: flex; align-items: center; border-bottom: 2px solid var(--bg); padding-bottom: 16px; color: var(--text); position: relative; }
+        .card-title::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 60px; height: 2px; background: var(--primary); }
+        .step-badge { background: var(--primary); color: white; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 0.9rem; font-weight: bold; margin-right: 12px; box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.4); }
+
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-weight: 600; margin-bottom: 10px; font-size: 0.95rem; color: var(--text); }
+        .sub-label { font-size: 0.85rem; color: var(--text-muted); font-weight: normal; margin-left: 5px; }
+
+        input, textarea, select { width: 100%; padding: 14px 18px; border: 2px solid var(--border); border-radius: 12px; font-family: inherit; font-size: 1rem; box-sizing: border-box; transition: all 0.2s; background-color: #f9fafb; }
+        input:focus, textarea:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1); background-color: white; }
+
+        .api-input-group { display: flex; gap: 12px; }
+        .api-input-group input { flex: 1; }
+
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: start; }
+
+        .button-group { display: flex; gap: 16px; flex-wrap: wrap; }
+        button { padding: 14px 28px; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 10px; color: white; font-size: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        button:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: none; }
+        button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        button:active { transform: scale(0.97); }
+
+        .btn-ai { background-color: var(--primary); width: 100%; margin-top: 20px; padding: 16px;}
+        .btn-ai:hover:not(:disabled) { background-color: var(--primary-hover); }
+        .btn-parse { background-color: var(--action); }
+        .btn-parse:hover:not(:disabled) { background-color: var(--action-hover); }
+        .btn-copy { background-color: var(--success); }
+        .btn-copy:hover:not(:disabled) { background-color: var(--success-hover); }
+
+        #modelSelection { display: none; margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--border); }
+        .status { font-size: 0.85rem; color: var(--text-muted); margin-top: 8px; display: block; }
+
+        @media (max-width: 768px) {
+            .grid { grid-template-columns: 1fr; }
+            .api-input-group { flex-direction: column; }
+            .button-group { flex-direction: column; }
+            button { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="app-header">
+        <h2>🚀 OMNI Parser</h2>
+        <p>Jembatan Cerdas dari AI ke Blogspot</p>
+    </div>
+
+    <!-- Area Setting API -->
+    <div class="card" style="border-left: 4px solid var(--primary);">
+        <h3 class="card-title">⚙️ Konfigurasi Sistem</h3>
+        <div class="form-group" style="margin-bottom: 0;">
+            <label for="apiKey">🔑 Gemini API Key <span class="sub-label">(Disimpan aman di memori sementara)</span></label>
+            <div class="api-input-group">
+                <input type="password" id="apiKey" placeholder="Paste API Key Gemini Anda di sini...">
+                <button class="btn-parse" onclick="fetchModels()" id="btnFetchModels" style="width: auto;">🔄 Cek Model</button>
+            </div>
+
+            <div id="modelSelection">
+                <label for="modelSelect">🧠 Pilih Model Kecerdasan:</label>
+                <select id="modelSelect"></select>
+            </div>
+            <span class="status">Pastikan kunci API valid untuk mengakses fitur generator.</span>
+        </div>
+    </div>
+
+    <div class="grid">
+        <!-- Kolom Kiri: Input -->
+        <div class="card">
+            <h3 class="card-title"><span class="step-badge">1</span> Teks Mentah Gemini</h3>
+            <div class="form-group" style="margin-bottom: 0;">
+                <textarea id="inputGemini" style="height: 500px;" placeholder="Paste hasil percakapan atau artikel mentah dari Gemini di sini..."></textarea>
+                <button class="btn-ai" id="btnAI" onclick="generateAI()">
+                    ✨ Bersihkan & Optimasi dengan AI
+                </button>
+            </div>
+        </div>
+
+        <!-- Kolom Kanan: Hasil AI -->
+        <div class="card">
+            <h3 class="card-title"><span class="step-badge">2</span> Hasil Optimasi AI</h3>
+            <div class="form-group">
+                <label for="outJudul">🎯 Judul SEO:</label>
+                <input type="text" id="outJudul" placeholder="Judul otomatis akan muncul di sini...">
+            </div>
+            <div class="form-group">
+                <label for="outCopy">✍️ Copywriting Pembuka:</label>
+                <textarea id="outCopy" style="height: 100px;" placeholder="Kalimat persuasif pembuka..."></textarea>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+                <label for="outCleaned">📝 Konten Bersih (Markdown):</label>
+                <textarea id="outCleaned" style="height: 230px;" placeholder="Materi yang sudah dibersihkan akan muncul di sini..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Area Final: Gabung & Copy -->
+    <div class="card" style="border-left: 6px solid var(--success);">
+        <h3 class="card-title"><span class="step-badge">3</span> Finalisasi & Ekspor HTML</h3>
+
+        <div class="button-group" style="margin-bottom: 24px;">
+            <button class="btn-parse" onclick="prosesParser()">
+                ⚙️ Gabung & Konversi ke HTML
+            </button>
+            <button class="btn-copy" onclick="copyKeClipboard()">
+                📋 Salin Kode HTML
+            </button>
+        </div>
+
+        <div class="grid">
+            <div class="form-group" style="margin-bottom: 0;">
+                <label for="outputHtml">📦 Kode HTML Final (Mode HTML Blogspot):</label>
+                <textarea id="outputHtml" style="height: 300px; background-color: #1e293b; color: #e2e8f0; font-family: 'Fira Code', monospace; font-size: 0.85rem;" readonly placeholder="Hasil konversi HTML akan tampil di sini..."></textarea>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+                <label>👁️ Preview Tampilan:</label>
+                <div id="htmlPreview" style="height: 300px; overflow-y: auto; border: 2px solid var(--border); border-radius: 12px; padding: 20px; background: white;">
+                    <p style="color: var(--text-muted); text-align: center; margin-top: 100px;">Preview akan muncul setelah konversi.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // OTAK: Logika untuk menarik daftar model aktif dari API pusat
+    async function fetchModels() {
+        const apiKey = document.getElementById('apiKey').value.trim();
+        const btnFetch = document.getElementById('btnFetchModels');
+        const modelDiv = document.getElementById('modelSelection');
+        const modelSelect = document.getElementById('modelSelect');
+
+        if (!apiKey) {
+            alert("Harap masukkan API Key Gemini terlebih dahulu, Mase!");
+            return;
+        }
+
+        // TIKUS: Resiliensi UI, mencegah spam klik
+        const originalText = btnFetch.innerHTML;
+        btnFetch.innerHTML = "⏳ Mencari...";
+        btnFetch.disabled = true;
+
+        try {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+            const data = await response.json();
+
+            if (data.error) {
+                alert("Error dari API: " + data.error.message);
+                console.error("API Error details:", data.error);
+                return;
+            }
+
+            // MANTRA: Filter hanya model yang bisa melakukan 'generateContent' (Teks)
+            const validModels = data.models.filter(m =>
+                m.supportedGenerationMethods && m.supportedGenerationMethods.includes("generateContent")
+            );
+
+            // Kosongkan dropdown sebelumnya
+            modelSelect.innerHTML = '';
+
+            validModels.forEach(m => {
+                const option = document.createElement('option');
+                // Potong prefix 'models/' dari string name
+                const modelId = m.name.replace('models/', '');
+                option.value = modelId;
+                // Format: Nama Tampilan (Versi)
+                option.text = `${m.displayName} (${modelId})`;
+
+                // KOPI: Pilihkan gemini-1.5-flash sebagai default yang direkomendasikan jika ada
+                if (modelId === 'gemini-1.5-flash') {
+                    option.selected = true;
+                }
+
+                modelSelect.appendChild(option);
+            });
+
+            // Tampilkan div pemilihan model
+            modelDiv.style.display = 'block';
+
+        } catch (error) {
+            alert("Terjadi kesalahan jaringan saat mengecek model. Periksa console.");
+            console.error("Fetch Error:", error);
+        } finally {
+            btnFetch.innerHTML = originalText;
+            btnFetch.disabled = false;
+        }
+    }
+
+    // OTAK: Logika utama pemanggilan API
+    async function generateAI() {
+        const apiKey = document.getElementById('apiKey').value.trim();
+        const rawText = document.getElementById('inputGemini').value.trim();
+        const btnAI = document.getElementById('btnAI');
+
+        if (!apiKey) {
+            alert("Harap masukkan API Key Gemini terlebih dahulu!");
+            return;
+        }
+        if (!rawText) {
+            alert("Harap isi teks mentah dari Gemini di kotak pertama!");
+            return;
+        }
+
+        // TIKUS: Disable tombol selama proses agar tidak ada double-request
+        btnAI.innerHTML = "⏳ Sedang memproses dengan AI...";
+        btnAI.disabled = true;
+
+        // MEJA BUNDAR: Validasi model mana yang akan dipakai
+        let selectedModel = "gemini-1.5-flash"; // Fallback aman
+        const modelDropdown = document.getElementById('modelSelect');
+        if (modelDropdown && modelDropdown.value && document.getElementById('modelSelection').style.display !== 'none') {
+            selectedModel = modelDropdown.value;
+        }
+
+        // MANTRA: Instruksi tegas sebagai Editor Pembersih
+        const promptText = `
+Anda adalah Editor Pembersih (Cleaning Editor) dan Spesialis SEO Blogspot.
+Tugas utama Anda adalah merajut dan membersihkan "Percakapan Mentah" dari AI menjadi satu struktur artikel blog yang utuh, profesional, dan siap tayang.
+
+INSTRUKSI KHUSUS:
+1. ELIMINASI BASA-BASI: Buang semua kalimat khas AI seperti "Tentu, ini...", "Berikut adalah...", "Semoga membantu!", atau sapaan di tengah teks.
+2. RAJUT MATERI: Jika teks mentah berisi beberapa fragmen atau revisi, gabungkan menjadi satu alur artikel yang koheren. Jangan merangkum terlalu pendek, pertahankan detail teknis/penting.
+3. STANDARISASI MARKDOWN: Pastikan penggunaan Heading (H2, H3), List, dan Bold konsisten dan enak dibaca di blog.
+4. OPTIMASI SEO: Buatkan Judul yang memancing klik (click-worthy) namun tetap relevan.
+5. COPYWRITING: Buatkan 1 paragraf pembuka yang "hooking", menggunakan gaya bahasa personal namun tetap kredibel.
+
+HASIL HARUS DALAM FORMAT JSON BERIKUT:
+{
+  "judul": "Judul SEO yang Menarik",
+  "copywriting": "Paragraf pembuka persuasif",
+  "konten_bersih": "Seluruh isi materi yang sudah dirajut & dibersihkan dalam format Markdown (tanpa basa-basi)"
+}
+
+Teks Mentah untuk Diproses:
+${rawText}
+`;
+
+        const requestBody = {
+            contents: [{ parts: [{ text: promptText }] }],
+            generationConfig: {
+                response_mime_type: "application/json"
+            }
+        };
+
+        try {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody)
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                alert("Error dari API: " + data.error.message);
+                console.error("API Error details:", data.error);
+            } else {
+                const responseText = data.candidates[0].content.parts[0].text;
+                const aiResult = JSON.parse(responseText);
+
+                // MEJA BUNDAR: Mapping hasil JSON ke UI
+                document.getElementById('outJudul').value = aiResult.judul || "";
+                document.getElementById('outCopy').value = aiResult.copywriting || "";
+                document.getElementById('outCleaned').value = aiResult.konten_bersih || "";
+
+                if (aiResult.konten_bersih) {
+                    // Beri feedback visual bahwa proses selesai
+                    const btnAI = document.getElementById('btnAI');
+                    btnAI.style.backgroundColor = 'var(--success)';
+                    btnAI.innerHTML = "✅ Berhasil Dioptimasi!";
+                    setTimeout(() => {
+                        btnAI.style.backgroundColor = '';
+                        btnAI.innerHTML = "✨ Bersihkan & Optimasi dengan AI";
+                    }, 3000);
+                }
+            }
+        } catch (error) {
+            alert("Terjadi kesalahan jaringan atau koneksi API. Periksa console.");
+            console.error("Fetch Error:", error);
+        } finally {
+            // SETAN: Kembalikan kondisi tombol dengan cepat
+            btnAI.disabled = false;
+            // Jika tidak sukses (masih teks loading), kembalikan ke default
+            if (btnAI.innerHTML === "⏳ Sedang memproses dengan AI...") {
+                btnAI.innerHTML = "✨ Bersihkan & Optimasi dengan AI";
+            }
+        }
+    }
+
+    // SETAN: Merakit bagian-bagian menjadi HTML siap pakai
+    function prosesParser() {
+        const judul = document.getElementById('outJudul').value.trim();
+        const copy = document.getElementById('outCopy').value.trim();
+        const cleanedText = document.getElementById('outCleaned').value.trim();
+        const rawText = document.getElementById('inputGemini').value.trim();
+
+        // Prioritaskan konten bersih dari AI, jika kosong gunakan raw
+        const contentToParse = cleanedText || rawText;
+
+        if(!contentToParse) {
+            alert("Teks kosong! Harap isi atau jalankan AI terlebih dahulu.");
+            return;
+        }
+
+        // TIKUS: Parse Markdown menjadi HTML
+        let htmlContent = marked.parse(contentToParse);
+
+        // HANTU: Membungkus konten dengan gaya CSS sebaris (inline) yang aman untuk Blogspot
+        const finalHTML = `
+<!-- ================= START OMNI GENERATED ================= -->
+<div class="omni-article-container" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.8; font-size: 17px; color: #2d3748; max-width: 800px; margin: auto;">
+
+    ${judul ? `
+    <!-- Judul Artikel -->
+    <h1 style="color: #1a202c; border-bottom: 3px solid #6366f1; padding-bottom: 15px; margin-bottom: 30px; font-size: 2.2em; font-weight: 800; line-height: 1.2;">
+        ${judul}
+    </h1>` : ''}
+
+    ${copy ? `
+    <!-- Copywriting Pembuka -->
+    <div style="background-color: #f7fafc; border-left: 6px solid #6366f1; padding: 25px; margin-bottom: 35px; font-style: italic; border-radius: 4px 12px 12px 4px; color: #4a5568; font-size: 1.1em; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);">
+        ${copy}
+    </div>` : ''}
+
+    <!-- Konten Utama -->
+    <div class="omni-content-body" style="color: #4a5568;">
+        ${htmlContent}
+    </div>
+
+    <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center; font-size: 0.8em; color: #a0aec0;">
+        Diterbitkan via OMNI Parser
+    </div>
+</div>
+<!-- ================= END OMNI GENERATED ================= -->
+        `;
+
+        document.getElementById('outputHtml').value = finalHTML.trim();
+        document.getElementById('htmlPreview').innerHTML = finalHTML;
+    }
+
+    // Eksekusi penyalinan ke clipboard
+    function copyKeClipboard() {
+        const outputText = document.getElementById('outputHtml');
+        if(!outputText.value) {
+            alert("Hasil HTML masih kosong. Klik 'Gabung & Konversi ke HTML' terlebih dahulu.");
+            return;
+        }
+
+        // Pilih teks dan salin
+        outputText.select();
+        outputText.setSelectionRange(0, 99999); // Untuk perangkat seluler
+
+        try {
+             // Menggunakan eksekusi jadul yang terbukti ampuh di iframe/browser lama
+            document.execCommand('copy');
+            alert("✅ Berhasil! Kode HTML sudah disalin.\n\nLangkah selanjutnya:\n1. Buka draft Blogger/Blogspot Anda.\n2. Ubah mode penulisan ke 'Tampilan HTML' (Bukan Tampilan Menulis/Compose).\n3. Paste kodenya di sana.");
+        } catch (err) {
+            alert("Gagal menyalin otomatis. Silakan salin manual dari kotak teks.");
+        }
+    }
+</script>
+
+</body>
+</html>
