@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marketing Ecosystem Dashboard</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-color: #f3f4f6;
+            --sidebar-bg: #1e293b;
+            --sidebar-text: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #111827;
+            --text-muted: #6b7280;
+            --border-color: #e5e7eb;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            display: flex;
+            height: 100vh;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            overflow: hidden;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 250px;
+            background-color: var(--sidebar-bg);
+            color: var(--sidebar-text);
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border-bottom: 1px solid #334155;
+            text-align: center;
+        }
+
+        .nav-menu {
+            list-style: none;
+            padding: 10px 0;
+            flex-grow: 1;
+        }
+
+        .nav-item {
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background-color: #334155;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        /* Main Content Styles */
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .header {
+            background-color: var(--card-bg);
+            padding: 15px 30px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .content-area {
+            padding: 30px;
+            flex-grow: 1;
+        }
+
+        /* Section visibility */
+        .section {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Cards & Grid */
+        .grid-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .card h3 {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .card .value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        /* Tables */
+        .table-container {
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: #f9fafb;
+            font-weight: bold;
+            color: var(--text-muted);
+        }
+
+        tr:hover {
+            background-color: #f9fafb;
+        }
+
+        .status {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .status.new { background-color: #dbeafe; color: #1e40af; }
+        .status.contacted { background-color: #fef3c7; color: #b45309; }
+        .status.converted { background-color: #d1fae5; color: #065f46; }
+
+        /* Mobile responsiveness */
+        .mobile-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-main);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: fixed;
+                bottom: 0;
+                z-index: 1000;
+                flex-direction: row;
+                overflow-x: auto;
+                padding: 0;
+            }
+            .sidebar-header {
+                display: none;
+            }
+            .nav-menu {
+                display: flex;
+                padding: 0;
+                margin: 0;
+            }
+            .nav-item {
+                padding: 15px;
+                border-left: none;
+                border-bottom: 4px solid transparent;
+                flex: 1;
+                justify-content: center;
+                text-align: center;
+                font-size: 0.9rem;
+            }
+            .nav-item:hover, .nav-item.active {
+                border-left: none;
+                border-bottom: 4px solid var(--primary-color);
+            }
+            .main-content {
+                padding-bottom: 60px; /* Space for bottom nav */
+            }
+            .header {
+                padding: 15px;
+            }
+            .mobile-toggle {
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar / Bottom Nav -->
+    <aside class="sidebar">
+        <div class="sidebar-header">MktgEco</div>
+        <ul class="nav-menu">
+            <li class="nav-item active" data-target="dashboard">
+                <span>📊</span> <span>Dashboard</span>
+            </li>
+            <li class="nav-item" data-target="crm">
+                <span>👥</span> <span>CRM Leads</span>
+            </li>
+            <li class="nav-item" data-target="ai-copy">
+                <span>✍️</span> <span>AI Copywriter</span>
+            </li>
+            <li class="nav-item" data-target="campaigns">
+                <span>🚀</span> <span>Campaigns</span>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="header">
+            <h2 id="page-title">Dashboard Overview</h2>
+            <div class="user-profile">
+                👤 Admin
+            </div>
+        </header>
+
+        <div class="content-area">
+
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="section active">
+                <div class="grid-cards">
+                    <div class="card">
+                        <h3>Total Leads</h3>
+                        <div class="value">1,284</div>
+                        <p style="color: var(--success-color); font-size: 0.8rem; margin-top: 5px;">↑ 12% vs last month</p>
+                    </div>
+                    <div class="card">
+                        <h3>Conversion Rate</h3>
+                        <div class="value">4.2%</div>
+                        <p style="color: var(--success-color); font-size: 0.8rem; margin-top: 5px;">↑ 0.8% vs last month</p>
+                    </div>
+                    <div class="card">
+                        <h3>Campaign Spend</h3>
+                        <div class="value">Rp 12.5M</div>
+                        <p style="color: var(--danger-color); font-size: 0.8rem; margin-top: 5px;">↓ 5% vs last month</p>
+                    </div>
+                    <div class="card">
+                        <h3>Active Campaigns</h3>
+                        <div class="value">8</div>
+                    </div>
+                </div>
+                <div class="card" style="margin-top: 20px;">
+                    <h3>Recent Activity</h3>
+                    <ul style="list-style: none; padding-top: 10px;">
+                        <li style="padding: 10px 0; border-bottom: 1px solid #eee;">✅ Campaign "Promo Merdeka" launched.</li>
+                        <li style="padding: 10px 0; border-bottom: 1px solid #eee;">👥 15 new leads generated from Facebook Ads.</li>
+                        <li style="padding: 10px 0;">✍️ AI generated new ad copy for "Kos Eksklusif".</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- CRM Section -->
+            <section id="crm" class="section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3>Leads Management</h3>
+                    <button class="btn">+ Add Lead</button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Source</th>
+                                <th>Interest</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Budi Santoso</td>
+                                <td>Instagram Ads</td>
+                                <td>Kos Premium</td>
+                                <td><span class="status new">New</span></td>
+                                <td><a href="https://wa.me/6281234567890" target="_blank" style="color: #25d366; text-decoration: none; font-weight: bold;">WhatsApp</a></td>
+                            </tr>
+                            <tr>
+                                <td>Siti Aminah</td>
+                                <td>Google Search</td>
+                                <td>Kos Standar</td>
+                                <td><span class="status contacted">Contacted</span></td>
+                                <td><a href="https://wa.me/6289876543210" target="_blank" style="color: #25d366; text-decoration: none; font-weight: bold;">WhatsApp</a></td>
+                            </tr>
+                            <tr>
+                                <td>Andi Wijaya</td>
+                                <td>Referral</td>
+                                <td>Kos VIP</td>
+                                <td><span class="status converted">Converted</span></td>
+                                <td><a href="https://wa.me/6285551234567" target="_blank" style="color: #25d366; text-decoration: none; font-weight: bold;">WhatsApp</a></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- AI Copywriter Section -->
+            <section id="ai-copy" class="section">
+                <div class="grid-cards" style="grid-template-columns: 1fr 1fr;">
+                    <div class="card">
+                        <h3>Create New Copy</h3>
+                        <div class="form-group">
+                            <label>Product / Service Name</label>
+                            <input type="text" class="form-control" placeholder="e.g. Kos Eksklusif Jakarta Selatan">
+                        </div>
+                        <div class="form-group">
+                            <label>Target Audience</label>
+                            <input type="text" class="form-control" placeholder="e.g. Mahasiswa & Pekerja Kantoran">
+                        </div>
+                        <div class="form-group">
+                            <label>Key Selling Points</label>
+                            <textarea class="form-control" placeholder="e.g. Dekat MRT, WiFi Cepat, Kamar Mandi Dalam"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Tone of Voice</label>
+                            <select class="form-control">
+                                <option>Professional & Persuasive</option>
+                                <option>Friendly & Casual</option>
+                                <option>Urgent & Promo</option>
+                            </select>
+                        </div>
+                        <button class="btn" style="width: 100%;" onclick="generateCopy()">✨ Generate with AI</button>
+                    </div>
+                    <div class="card">
+                        <h3>Generated Result</h3>
+                        <div id="ai-result" style="padding: 15px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; min-height: 300px; white-space: pre-wrap;">
+Awaiting generation...
+                        </div>
+                        <button class="btn" style="width: 100%; margin-top: 15px; background-color: #64748b;" onclick="copyToClipboard()">📋 Copy to Clipboard</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Campaigns Section -->
+            <section id="campaigns" class="section">
+                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3>Active Campaigns</h3>
+                    <button class="btn">+ New Campaign</button>
+                </div>
+                <div class="grid-cards">
+                    <div class="card" style="border-left: 4px solid var(--success-color);">
+                        <div style="display: flex; justify-content: space-between;">
+                            <h3 style="color: var(--text-main); font-weight: bold;">Promo Merdeka 2024</h3>
+                            <span class="status converted">Active</span>
+                        </div>
+                        <p style="font-size: 0.9rem; color: var(--text-muted); margin: 10px 0;">Platform: Meta Ads</p>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                            <span>Spend: Rp 2.5M</span>
+                            <span>Clicks: 1,200</span>
+                        </div>
+                    </div>
+                    <div class="card" style="border-left: 4px solid #f59e0b;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <h3 style="color: var(--text-main); font-weight: bold;">Retargeting Website</h3>
+                            <span class="status contacted">Paused</span>
+                        </div>
+                        <p style="font-size: 0.9rem; color: var(--text-muted); margin: 10px 0;">Platform: Google Ads</p>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                            <span>Spend: Rp 1.0M</span>
+                            <span>Clicks: 450</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <script>
+        // Navigation Logic
+        const navItems = document.querySelectorAll('.nav-item');
+        const sections = document.querySelectorAll('.section');
+        const pageTitle = document.getElementById('page-title');
+
+        const sectionTitles = {
+            'dashboard': 'Dashboard Overview',
+            'crm': 'CRM Leads',
+            'ai-copy': 'AI Copywriter',
+            'campaigns': 'Campaign Manager'
+        };
+
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                // Remove active class from all
+                navItems.forEach(nav => nav.classList.remove('active'));
+                sections.forEach(sec => sec.classList.remove('active'));
+
+                // Add active class to clicked
+                item.classList.add('active');
+                const targetId = item.getAttribute('data-target');
+                document.getElementById(targetId).classList.add('active');
+
+                // Update title
+                pageTitle.textContent = sectionTitles[targetId];
+            });
+        });
+
+        // Mock AI Copy Generation
+        function generateCopy() {
+            const resultDiv = document.getElementById('ai-result');
+            resultDiv.innerHTML = '<i>Memproses dengan AI...</i>';
+
+            setTimeout(() => {
+                resultDiv.innerHTML = `**🌟 Kos Eksklusif Jakarta Selatan - Nyaman & Strategis! 🌟**\n\nLelah dengan kos yang sempit dan jauh dari mana-mana? Temukan kenyamanan maksimal di Kos Eksklusif kami!\n\n✅ **Dekat MRT** - Bebas macet setiap hari!\n✅ **WiFi Super Cepat** - WFH tanpa hambatan.\n✅ **Kamar Mandi Dalam** - Privasi terjamin.\n\nCocok banget buat kamu, mahasiswa atau pekerja kantoran yang butuh ketenangan setelah seharian beraktivitas.\n\n🔥 **PROMO TERBATAS!** Hubungi kami sekarang dan dapatkan diskon 10% untuk bulan pertama!\n\n👇 **Klik link di bio untuk booking!** 👇`;
+            }, 1500);
+        }
+
+        function copyToClipboard() {
+            const text = document.getElementById('ai-result').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Copied to clipboard!');
+            });
+        }
+    </script>
+</body>
+</html>
